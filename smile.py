@@ -1,15 +1,19 @@
 import telegram
-from telegram.ext import *
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import (
+    ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
+)
 import QuranicVerse as quran
 import json
+import os
+from dotenv import load_dotenv
 
-Token = ''
+load_dotenv()
+Token = os.getenv('BOT_TOKEN')
 
-updater = telegram.ext.Updater('',use_context=True)
-dispatcher = updater.dispatcher
+app = ApplicationBuilder().token(Token).build()
 
-def start(update, context):
+def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     update.message.reply_text("Hello! Welcome to Roses of Madinah Bot. Find out about our classes and our latest class updates.")
     update.message.reply_text(
         """
@@ -90,19 +94,16 @@ def FindMyQibla(update,context):
     ]
     reply_markup = InlineKeyboardMarkup(button)
     context.bot.send_message(chat_id=update.effective_chat.id, reply_markup=reply_markup)
-#text="Click the button to open the link:",
 
-dispatcher.add_handler(CommandHandler('start', start))
-dispatcher.add_handler(CallbackQueryHandler(open_link, pattern='open_link'))
-dispatcher.add_handler(CommandHandler("GiveMeAQuranicVerse",GiveMeAQuranicVerse))
-dispatcher.add_handler(CommandHandler("LearnADua",LearnADua))
-dispatcher.add_handler(CommandHandler("LearnAHadith",LearnAHadith))
-dispatcher.add_handler(CommandHandler("IslamicQuote",IslamicQuote))
-dispatcher.add_handler(CommandHandler("LearnAHadith",LearnAHadith))
-dispatcher.add_handler(CommandHandler("IslamicQuiz",IslamicQuiz))
-dispatcher.add_handler(CommandHandler("FindMyQibla",FindMyQibla))
-dispatcher.add_handler(CommandHandler("help", help))
+app.add_handler(CommandHandler('start', start))
+app.add_handler(CallbackQueryHandler(open_link, pattern='open_link'))
+app.add_handler(CommandHandler("GiveMeAQuranicVerse", GiveMeAQuranicVerse))
+app.add_handler(CommandHandler("LearnADua", LearnADua))
+app.add_handler(CommandHandler("LearnAHadith", LearnAHadith))
+app.add_handler(CommandHandler("IslamicQuote", IslamicQuote))
+app.add_handler(CommandHandler("IslamicQuiz", IslamicQuiz))
+app.add_handler(CommandHandler("FindMyQibla", FindMyQibla))
+app.add_handler(CommandHandler("help", help))
 
-updater.start_polling()
-updater.idle()
+app.run_polling()
 
