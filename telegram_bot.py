@@ -1,6 +1,7 @@
 import os
 import requests
 import telebot
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from dotenv import load_dotenv
 
 # --------------------
@@ -42,14 +43,15 @@ def start(message):
         "🌹 *ٱلسَّلَامُ عَلَيْكُمْ وَرَحْمَةُ ٱللَّٰهِ وَبَرَكَاتُهُ*\n\n"
         "Welcome to *ROM PeerBot* 🤍\n"
         "A gentle companion to help us stay consistent with *Ṣalāh*, *Dhikr*, and *ʿAmal*.\n\n"
-        "🕌 *What can I help you with?*\n\n"
-        "• /prayertimes — View today’s prayer times\n"
-        "• /praywhere — Find nearby mosques & musollahs\n"
-        "• /remind — Enable prayer reminders\n"
-        "• /unremind — Disable prayer reminders\n"
-        "• /tasbih — Pause & remember Allah ﷻ\n"
-        "• /tabung — Support Amal Jariah projects\n"
-        "• /feedback — Share suggestions or improvements\n\n"
+        "🕌 *Available Commands*\n\n"
+        "• /prayertimes — View today’s ṣalāh times\n"
+        "• /praywhere — Find nearby masājid\n"
+        "• /remind — Enable ṣalāh reminders\n"
+        "• /unremind — Disable ṣalāh reminders\n"
+        "• /tasbih — Dhikr & remembrance\n"
+        "• /tabung — Support ʿAmal Jāriyah\n"
+        "• /feedback — Share feedback\n\n"
+        "You can also use the *Menu* button below ⬇️\n\n"
         "May Allah place barakah in our intentions 🌙"
     )
     bot.reply_to(message, text)
@@ -62,17 +64,17 @@ def prayer_times(message):
     timings = get_prayer_times(DEFAULT_CITY, DEFAULT_COUNTRY)
 
     if not timings:
-        bot.reply_to(message, "❌ Unable to fetch prayer times right now.")
+        bot.reply_to(message, "❌ Unable to fetch ṣalāh times right now.")
         return
 
     text = (
-        f"🕋 *Prayer Times Today ({DEFAULT_CITY})*\n\n"
+        f"🕋 *Ṣalāh Times Today ({DEFAULT_CITY})*\n\n"
         f"🌅 Fajr: {timings['Fajr']}\n"
         f"☀️ Dhuhr: {timings['Dhuhr']}\n"
         f"🌤 Asr: {timings['Asr']}\n"
         f"🌇 Maghrib: {timings['Maghrib']}\n"
         f"🌙 Isha: {timings['Isha']}\n\n"
-        "May Allah accept our prayers 🤲"
+        "May Allah accept our ṣalāh 🤲"
     )
     bot.reply_to(message, text)
 
@@ -82,10 +84,10 @@ def prayer_times(message):
 @bot.message_handler(commands=["praywhere"])
 def pray_where(message):
     text = (
-        "📍 *Find Nearby Mosques & Musollahs*\n\n"
+        "📍 *Find Nearby Masājid & Musollahs*\n\n"
         "Please share your location using Telegram’s 📎 attachment button:\n"
         "➡️ Attach → Location\n\n"
-        "In shā’ Allāh, I’ll help you find a place to pray."
+        "إِنْ شَاءَ ٱللَّٰهُ, I’ll help you find a place to pray."
     )
     bot.reply_to(message, text)
 
@@ -94,14 +96,17 @@ def pray_where(message):
 # --------------------
 @bot.message_handler(commands=["remind"])
 def remind(message):
-    text = (
-        "🔔 *Prayer Reminders Enabled*\n\n"
-        "You will receive:\n"
-        "• A reminder *10 minutes before* prayer time\n"
-        "• A reminder *at the exact prayer time*\n\n"
-        "May Allah help us stay steadfast 🤍"
+    markup = InlineKeyboardMarkup()
+    markup.row(
+        InlineKeyboardButton("✅ Enable Reminders", callback_data="remind_on"),
+        InlineKeyboardButton("❌ Disable Reminders", callback_data="remind_off")
     )
-    bot.reply_to(message, text)
+
+    text = (
+        "🔔 *Ṣalāh Reminder Settings*\n\n"
+        "Choose your preference:"
+    )
+    bot.reply_to(message, text, reply_markup=markup)
 
 # --------------------
 # /unremind
@@ -109,9 +114,9 @@ def remind(message):
 @bot.message_handler(commands=["unremind"])
 def unremind(message):
     text = (
-        "❌ *Prayer Reminders Disabled*\n\n"
-        "You will no longer receive prayer reminders.\n"
-        "You can re-enable anytime using /remind."
+        "❌ *Ṣalāh Reminders Disabled*\n\n"
+        "You will no longer receive ṣalāh reminders.\n"
+        "You may re-enable them anytime using /remind."
     )
     bot.reply_to(message, text)
 
@@ -122,7 +127,6 @@ def unremind(message):
 def tasbih(message):
     text = (
         "📿 *Tasbih Time*\n\n"
-        "Take a moment to remember Allah ﷻ\n\n"
         "• *أَسْتَغْفِرُ ٱللَّٰهَ* (100×)\n"
         "• *ٱللَّٰهُ ٱللَّٰهُ*\n"
         "• *ٱللَّهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ ﷺ*\n\n"
@@ -137,17 +141,12 @@ def tasbih(message):
 @bot.message_handler(commands=["tabung"])
 def tabung(message):
     text = (
-        "💚 *Amal Jariah – Ongoing Projects*\n\n"
+        "💚 *ʿAmal Jāriyah – Ongoing Projects*\n\n"
         "Support beneficial projects in:\n"
         "• Cambodia\n"
         "• Philippines\n"
         "• India\n"
         "• Bangladesh\n\n"
-        "📌 *How it works:*\n"
-        "1️⃣ Scan the QR code\n"
-        "2️⃣ Make your donation\n"
-        "3️⃣ Screenshot your receipt\n"
-        "4️⃣ Submit when instructed\n\n"
         "May Allah multiply your rewards 🤲"
     )
     bot.reply_to(message, text)
@@ -159,12 +158,34 @@ def tabung(message):
 def feedback(message):
     text = (
         "📩 *We Value Your Feedback*\n\n"
-        "If you have suggestions, ideas, or notice an issue:\n\n"
-        "🔗 Google Form: (add link here)\n"
+        "🔗 Google Form: (add link)\n"
         "📧 Email: roseofmadinah@email.com\n\n"
-        "JazakAllahu khair for helping us improve 🌹"
+        "JazakAllahu khair 🌹"
     )
     bot.reply_to(message, text)
+
+# --------------------
+# Callback handler (ONLY for reminder toggles)
+# --------------------
+@bot.callback_query_handler(func=lambda call: call.data in ["remind_on", "remind_off"])
+def handle_reminder_toggle(call):
+    bot.answer_callback_query(call.id)
+
+    if call.data == "remind_on":
+        text = (
+            "🔔 *Ṣalāh Reminders Enabled*\n\n"
+            "You will receive reminders:\n"
+            "• 10 minutes before ṣalāh\n"
+            "• At exact ṣalāh time\n\n"
+            "May Allah help us remain steadfast 🤍"
+        )
+    else:
+        text = (
+            "❌ *Ṣalāh Reminders Disabled*\n\n"
+            "You will no longer receive ṣalāh reminders."
+        )
+
+    bot.send_message(call.message.chat.id, text)
 
 # --------------------
 # Fallback
@@ -173,7 +194,7 @@ def feedback(message):
 def fallback(message):
     bot.reply_to(
         message,
-        "❓ I didn’t understand that.\n\nUse /help to see available commands."
+        "❓ I didn’t understand that.\n\nPlease use the Menu button below ⬇️ or /help."
     )
 
 # --------------------
