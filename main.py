@@ -240,9 +240,7 @@ def fallback(message):
         "❓ I didn’t understand that.\n\nPlease use the Menu button below ⬇️ or /help."
     )
 
-# --------------------
-# Start polling
-# --------------------
+
 if __name__ == "__main__":
     try:
         # Start Flask health check server in background thread FIRST
