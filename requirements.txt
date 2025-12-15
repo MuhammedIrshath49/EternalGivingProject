@@ -20,3 +20,7 @@ geopy
 
 # Image processing (for dua images, QR codes)
 Pillow
+
+# Web server for health checks
+Flask
+gunicorn

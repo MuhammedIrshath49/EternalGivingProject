@@ -1,8 +1,24 @@
 import os
+import sys
+import logging
 import requests
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from dotenv import load_dotenv
+from threading import Thread
+from flask import Flask
+
+# --------------------
+# Logging setup
+# --------------------
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # --------------------
 # Load config
@@ -11,11 +27,32 @@ load_dotenv()
 API_TOKEN = os.getenv("API_TOKEN")
 DEFAULT_CITY = os.getenv("DEFAULT_CITY", "Singapore")
 DEFAULT_COUNTRY = os.getenv("DEFAULT_COUNTRY", "Singapore")
+PORT = int(os.getenv("PORT", "8080"))
 
 if not API_TOKEN:
+    logger.error("API_TOKEN not set in environment variables")
     raise RuntimeError("API_TOKEN not set in .env")
 
+logger.info(f"Bot starting with default city: {DEFAULT_CITY}")
 bot = telebot.TeleBot(API_TOKEN, parse_mode="Markdown")
+
+# --------------------
+# Health check server (for Render)
+# --------------------
+app = Flask(__name__)
+
+@app.route('/')
+def health_check():
+    return {'status': 'ok', 'message': 'ROM PeerBot is running'}, 200
+
+@app.route('/health')
+def health():
+    return {'status': 'healthy', 'bot': 'active'}, 200
+
+def run_flask():
+    """Run Flask server in a separate thread"""
+    logger.info(f"Flask server starting on 0.0.0.0:{PORT}")
+    app.run(host='0.0.0.0', port=PORT, debug=False, use_reloader=False, threaded=True)
 
 # --------------------
 # Helpers
@@ -23,16 +60,22 @@ bot = telebot.TeleBot(API_TOKEN, parse_mode="Markdown")
 PRAYER_API = "https://api.aladhan.com/v1/timingsByCity"
 
 def get_prayer_times(city, country):
-    params = {
-        "city": city,
-        "country": country,
-        "method": 3
-    }
-    res = requests.get(PRAYER_API, params=params, timeout=10)
-    if res.status_code != 200:
+    try:
+        params = {
+            "city": city,
+            "country": country,
+            "method": 3
+        }
+        res = requests.get(PRAYER_API, params=params, timeout=10)
+        if res.status_code != 200:
+            logger.warning(f"Prayer API returned status {res.status_code}")
+            return None
+        data = res.json()
+        logger.info(f"Successfully fetched prayer times for {city}, {country}")
+        return data["data"]["timings"]
+    except Exception as e:
+        logger.error(f"Error fetching prayer times: {e}")
         return None
-    data = res.json()
-    return data["data"]["timings"]
 
 # --------------------
 # /start & /help
@@ -200,5 +243,24 @@ def fallback(message):
 # --------------------
 # Start polling
 # --------------------
-print("🤖 ROM PeerBot is running...")
-bot.infinity_polling(skip_pending=True)
+if __name__ == "__main__":
+    try:
+        # Start Flask health check server in background thread FIRST
+        logger.info(f"Starting health check server on 0.0.0.0:{PORT}")
+        flask_thread = Thread(target=run_flask, daemon=True)
+        flask_thread.start()
+        
+        # Give Flask a moment to start and bind to the port
+        import time
+        time.sleep(2)
+        logger.info(f"Health check server should be running at http://0.0.0.0:{PORT}")
+        
+        # Start bot polling
+        logger.info("🤖 ROM PeerBot is starting...")
+        logger.info("Bot is now running and polling for messages")
+        bot.infinity_polling(skip_pending=True, timeout=60, long_polling_timeout=60)
+    except KeyboardInterrupt:
+        logger.info("Bot stopped by user")
+    except Exception as e:
+        logger.error(f"Bot crashed: {e}", exc_info=True)
+        raise
