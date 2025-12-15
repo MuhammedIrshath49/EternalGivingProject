@@ -1,4 +1,22 @@
-python-telegram-bot
+# Core bot framework
+pyTelegramBotAPI
+
+# Scheduling and time
+APScheduler
+pytz
+
+# HTTP requests and web scraping
 requests
 beautifulsoup4
+
+# Database
+SQLAlchemy
+
+# Configuration
 python-dotenv
+
+# Location services
+geopy
+
+# Image processing (for dua images, QR codes)
+Pillow
