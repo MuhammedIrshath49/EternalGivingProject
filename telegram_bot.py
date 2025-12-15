@@ -201,4 +201,4 @@ def fallback(message):
 # Start polling
 # --------------------
 print("🤖 ROM PeerBot is running...")
-bot.infinity_polling()
+bot.infinity_polling(skip_pending=True)
