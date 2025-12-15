@@ -201,8 +201,8 @@ def tabung(message):
 def feedback(message):
     text = (
         "📩 *We Value Your Feedback*\n\n"
-        "🔗 Google Form: (add link)\n"
-        "📧 Email: roseofmadinah@email.com\n\n"
+        "🔗 Google Form: https://forms.gle/LMtXXfuKVbW6USor7\n\n"
+        "📧 Email: rompeerbot@email.com\n\n"
         "JazakAllahu khair 🌹"
     )
     bot.reply_to(message, text)
