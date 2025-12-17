@@ -1,26 +1,20 @@
-# Core bot framework
-pyTelegramBotAPI
+# Aiogram - Modern async Telegram bot framework
+aiogram
 
-# Scheduling and time
-APScheduler
-pytz
+# Async HTTP client
+aiohttp
 
-# HTTP requests and web scraping
-requests
-beautifulsoup4
+# Async PostgreSQL driver
+asyncpg
 
-# Database
+# ORM for database
 SQLAlchemy
+
+# Scheduling
+APScheduler
 
 # Configuration
 python-dotenv
 
-# Location services
-geopy
-
-# Image processing (for dua images, QR codes)
-Pillow
-
-# Web server for health checks
-Flask
-gunicorn
+# HTTP requests (for prayer API)
+requests
