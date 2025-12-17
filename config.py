@@ -11,14 +11,24 @@ if not API_TOKEN:
     raise RuntimeError("API_TOKEN not set in .env")
 
 # Database Configuration
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "5433")
-DB_NAME = os.getenv("DB_NAME", "rom_peerbot")
-DB_USER = os.getenv("DB_USER", "postgres")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+# Railway provides DATABASE_URL, otherwise construct from individual vars
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-# Construct PostgreSQL URL
-DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+if DATABASE_URL:
+    # Railway/production: Use provided DATABASE_URL and convert to async
+    # Railway provides postgres:// but we need postgresql+asyncpg://
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif DATABASE_URL.startswith("postgresql://"):
+        DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+else:
+    # Local development: Construct from individual environment variables
+    DB_HOST = os.getenv("DB_HOST", "localhost")
+    DB_PORT = os.getenv("DB_PORT", "5433")
+    DB_NAME = os.getenv("DB_NAME", "rom_peerbot")
+    DB_USER = os.getenv("DB_USER", "postgres")
+    DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+    DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 # Prayer Configuration
 DEFAULT_CITY = os.getenv("DEFAULT_CITY", "Singapore")
