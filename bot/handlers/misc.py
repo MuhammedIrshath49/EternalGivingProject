@@ -31,9 +31,9 @@ async def cmd_tasbih(message: Message):
     await message.answer(text, parse_mode="Markdown")
 
 
-@router.message(Command("tabung"))
-async def cmd_tabung(message: Message):
-    """Handle /tabung command"""
+@router.message(Command("amaljariah"))
+async def cmd_amaljariah(message: Message):
+    """Handle /amaljariah command"""
     # Handle multiple countries (comma-separated)
     countries = [c.strip() for c in AMAL_JARIAH_COUNTRY.split(',')]
     
@@ -50,7 +50,7 @@ async def cmd_tabung(message: Message):
         "*AMAL JARIAH & DAWAH PROJECTS*\n\n"
         f"📅 *MONTH:* {AMAL_JARIAH_MONTH}\n"
         f"{country_text}\n"
-        f"💰 *Price:* {AMAL_JARIAH_PRICE} (fixed)\n\n"
+        f"💰 *Price:* {AMAL_JARIAH_PRICE}\n\n"
         "_JazakamAllah Khairan to all sponsors_\n\n"
         f"📞 *Register:* PM {AMAL_JARIAH_CONTACT}\n"
         f"🔗 *Website:* {AMAL_JARIAH_WEBSITE}\n\n"

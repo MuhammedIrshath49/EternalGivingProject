@@ -49,7 +49,7 @@ async def on_startup(bot: Bot, scheduler: AsyncIOScheduler):
         BotCommand(command="adkarbeforesleep", description="Configure sleep adkar"),
         BotCommand(command="allahuallah", description="Configure Allahu Allah reminders"),
         BotCommand(command="tasbih", description="Get tasbih reminder"),
-        BotCommand(command="tabung", description="Support the project"),
+        BotCommand(command="amaljariah", description="Support the project"),
         BotCommand(command="feedback", description="Send feedback"),
     ]
     await bot.set_my_commands(commands)

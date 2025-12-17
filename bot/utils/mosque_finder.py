@@ -26,14 +26,12 @@ async def find_nearby_mosques(latitude: float, longitude: float, limit: int = 5)
         overpass_url = "https://overpass-api.de/api/interpreter"
         
         # Overpass query to find mosques within radius
-        overpass_query = f"""
-        [out:json];
-        (
-          node["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{latitude},{longitude});
-          way["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{latitude},{longitude});
-        );
-        out center {limit};
-        """
+        overpass_query = f"""[out:json];
+(
+  node["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{latitude},{longitude});
+  way["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{latitude},{longitude});
+);
+out center {limit};"""
         
         headers = {
             "User-Agent": "ROM_PeerBot/2.0"
