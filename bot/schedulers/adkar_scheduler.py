@@ -107,71 +107,94 @@ async def send_allahu_allah(bot: Bot, user_id: int):
 
 async def schedule_adkar_for_user(scheduler: AsyncIOScheduler, bot: Bot, user_id: int, settings: UserSettings):
     """Schedule adkar reminders for a specific user"""
+    # Remove existing jobs for this user first
+    for job_id in [f"morning_adkar_{user_id}", f"evening_adkar_{user_id}", 
+                   f"sleep_adkar_{user_id}", f"allahu_allah_{user_id}"]:
+        if scheduler.get_job(job_id):
+            scheduler.remove_job(job_id)
+    
     # Get prayer times to calculate adkar timings
     timings, _ = await get_prayer_times(DEFAULT_CITY, DEFAULT_COUNTRY)
     if not timings:
         logger.error(f"Could not fetch prayer times for user {user_id}")
         return
     
-    # Morning adkar: 15 mins after Fajr
+    # Morning adkar: 15 mins after Fajr (Subuh azan)
     if settings.morning_adkar:
-        fajr_time = datetime.strptime(timings['Fajr'], "%H:%M")
-        morning_hour = fajr_time.hour
-        morning_minute = (fajr_time.minute + 15) % 60
-        if fajr_time.minute + 15 >= 60:
-            morning_hour = (morning_hour + 1) % 24
-        
-        scheduler.add_job(
-            send_morning_adkar,
-            trigger=CronTrigger(hour=morning_hour, minute=morning_minute),
-            args=[bot, user_id],
-            id=f"morning_adkar_{user_id}",
-            replace_existing=True
-        )
-        logger.info(f"Scheduled morning adkar for user {user_id} at {morning_hour:02d}:{morning_minute:02d}")
+        try:
+            fajr_time = datetime.strptime(timings['Fajr'], "%H:%M")
+            # Add 15 minutes
+            morning_time = fajr_time + timedelta(minutes=15)
+            morning_hour = morning_time.hour
+            morning_minute = morning_time.minute
+            
+            scheduler.add_job(
+                send_morning_adkar,
+                trigger=CronTrigger(hour=morning_hour, minute=morning_minute, timezone="Asia/Singapore"),
+                args=[bot, user_id],
+                id=f"morning_adkar_{user_id}",
+                replace_existing=True
+            )
+            logger.info(f"Scheduled morning adkar for user {user_id} at {morning_hour:02d}:{morning_minute:02d} (Fajr: {timings['Fajr']})")
+        except Exception as e:
+            logger.error(f"Error scheduling morning adkar for user {user_id}: {e}")
     
     # Evening adkar: 30 mins after Asr
     if settings.evening_adkar:
-        asr_time = datetime.strptime(timings['Asr'], "%H:%M")
-        evening_hour = asr_time.hour
-        evening_minute = (asr_time.minute + 30) % 60
-        if asr_time.minute + 30 >= 60:
-            evening_hour = (evening_hour + 1) % 24
-        
-        scheduler.add_job(
-            send_evening_adkar,
-            trigger=CronTrigger(hour=evening_hour, minute=evening_minute),
-            args=[bot, user_id],
-            id=f"evening_adkar_{user_id}",
-            replace_existing=True
-        )
-        logger.info(f"Scheduled evening adkar for user {user_id} at {evening_hour:02d}:{evening_minute:02d}")
+        try:
+            asr_time = datetime.strptime(timings['Asr'], "%H:%M")
+            # Add 30 minutes
+            evening_time = asr_time + timedelta(minutes=30)
+            evening_hour = evening_time.hour
+            evening_minute = evening_time.minute
+            
+            scheduler.add_job(
+                send_evening_adkar,
+                trigger=CronTrigger(hour=evening_hour, minute=evening_minute, timezone="Asia/Singapore"),
+                args=[bot, user_id],
+                id=f"evening_adkar_{user_id}",
+                replace_existing=True
+            )
+            logger.info(f"Scheduled evening adkar for user {user_id} at {evening_hour:02d}:{evening_minute:02d} (Asr: {timings['Asr']})")
+        except Exception as e:
+            logger.error(f"Error scheduling evening adkar for user {user_id}: {e}")
     
     # Sleep adkar: 1 hour after Isha
     if settings.sleep_adkar:
-        isha_time = datetime.strptime(timings['Isha'], "%H:%M")
-        sleep_hour = (isha_time.hour + 1) % 24
-        sleep_minute = isha_time.minute
-        
-        scheduler.add_job(
-            send_sleep_adkar,
-            trigger=CronTrigger(hour=sleep_hour, minute=sleep_minute),
-            args=[bot, user_id],
-            id=f"sleep_adkar_{user_id}",
-            replace_existing=True
-        )
-        logger.info(f"Scheduled sleep adkar for user {user_id} at {sleep_hour:02d}:{sleep_minute:02d}")
+        try:
+            isha_time = datetime.strptime(timings['Isha'], "%H:%M")
+            # Add 1 hour
+            sleep_time = isha_time + timedelta(hours=1)
+            sleep_hour = sleep_time.hour
+            sleep_minute = sleep_time.minute
+            
+            scheduler.add_job(
+                send_sleep_adkar,
+                trigger=CronTrigger(hour=sleep_hour, minute=sleep_minute, timezone="Asia/Singapore"),
+                args=[bot, user_id],
+                id=f"sleep_adkar_{user_id}",
+                replace_existing=True
+            )
+            logger.info(f"Scheduled sleep adkar for user {user_id} at {sleep_hour:02d}:{sleep_minute:02d} (Isha: {timings['Isha']})")
+        except Exception as e:
+            logger.error(f"Error scheduling sleep adkar for user {user_id}: {e}")
     
-    # Allahu Allah dhikr: interval-based
+    # Allahu Allah dhikr: interval-based (start immediately when enabled)
     if settings.allahu_allah_interval:
-        scheduler.add_job(
-            send_allahu_allah,
-            trigger=IntervalTrigger(hours=settings.allahu_allah_interval),
-            args=[bot, user_id],
-            id=f"allahu_allah_{user_id}",
-            replace_existing=True
-        )
-        logger.info(f"Scheduled Allahu Allah for user {user_id} every {settings.allahu_allah_interval} hours")
+        try:
+            # Send immediately when enabled
+            await send_allahu_allah(bot, user_id)
+            # Then schedule recurring
+            scheduler.add_job(
+                send_allahu_allah,
+                trigger=IntervalTrigger(hours=settings.allahu_allah_interval, timezone="Asia/Singapore"),
+                args=[bot, user_id],
+                id=f"allahu_allah_{user_id}",
+                replace_existing=True
+            )
+            logger.info(f"Scheduled Allahu Allah for user {user_id} every {settings.allahu_allah_interval} hours")
+        except Exception as e:
+            logger.error(f"Error scheduling Allahu Allah for user {user_id}: {e}")
 
 
 async def schedule_all_adkar(scheduler: AsyncIOScheduler, bot: Bot):
@@ -196,14 +219,15 @@ async def schedule_all_adkar(scheduler: AsyncIOScheduler, bot: Bot):
 
 def setup_adkar_scheduler(scheduler: AsyncIOScheduler, bot: Bot):
     """Setup daily adkar reminder scheduling"""
-    # Refresh adkar schedules daily at midnight (prayer times change daily)
+    # Refresh adkar schedules daily at midnight Singapore time (prayer times change daily)
     scheduler.add_job(
         schedule_all_adkar,
         'cron',
         hour=0,
         minute=1,
+        timezone="Asia/Singapore",
         args=[scheduler, bot],
         id='daily_adkar_refresh',
         replace_existing=True
     )
-    logger.info("Adkar scheduler setup complete")
+    logger.info("Adkar scheduler setup complete - daily refresh at 00:01 SGT")

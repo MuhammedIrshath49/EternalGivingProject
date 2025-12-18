@@ -50,6 +50,7 @@ async def on_startup(bot: Bot, scheduler: AsyncIOScheduler):
         BotCommand(command="allahuallah", description="Configure Allahu Allah reminders"),
         BotCommand(command="tasbih", description="Get tasbih reminder"),
         BotCommand(command="amaljariah", description="Support the project"),
+        BotCommand(command="resources", description="Access Islamic resources"),
         BotCommand(command="feedback", description="Send feedback"),
     ]
     await bot.set_my_commands(commands)
@@ -86,6 +87,10 @@ async def main():
     
     # Initialize scheduler
     scheduler = AsyncIOScheduler(timezone="Asia/Singapore")
+    
+    # Set scheduler reference in adkar handler for immediate rescheduling
+    from bot.handlers.adkar import set_scheduler
+    set_scheduler(scheduler)
     
     # Register handlers
     dp.include_router(start.router)

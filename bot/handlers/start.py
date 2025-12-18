@@ -48,7 +48,7 @@ async def cmd_start(message: Message, session: AsyncSession):
         await session.rollback()
     
     text = (
-        "🌹 *ٱلسَّلَامُ عَلَيْكُمْ وَرَحْمَةُ ٱللَّٰهِ وَبَرَكَاتُهُ*\n\n"
+        "🌹 *ٱلسَّلَامُ عَلَيْكُمْ وَرَحْمَةُ ٱللَّٰهِ وَبَرَكَاتُهُ* 🌹\n\n"
         "Welcome to *ROM PeerBot — Your Personal Islamic Companion 💚* 🤍\n"
         "A gentle companion to help us stay consistent with *Ṣalāh*, *Dhikr*, and *Awrad*.\n\n"
         "🕌 *Available Commands*\n\n"
@@ -63,6 +63,7 @@ async def cmd_start(message: Message, session: AsyncSession):
         "• /unremind — Disable ṣalāh reminders\n"
         "• /tasbih — Dhikr & remembrance\n"
         "• /amaljariah — Support ʿAmal Jāriyah\n"
+        "• /resources — Access Islamic resources\n"
         "• /feedback — Share feedback\n\n"
         "You can also use the *Menu* button below ⬇️\n\n"
         "May Allah place barakah in our intentions 🌙"

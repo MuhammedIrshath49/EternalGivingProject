@@ -94,14 +94,15 @@ async def schedule_all_prayer_reminders(scheduler: AsyncIOScheduler, bot: Bot):
 
 def setup_prayer_scheduler(scheduler: AsyncIOScheduler, bot: Bot):
     """Setup daily prayer reminder scheduling"""
-    # Schedule prayer reminders to be refreshed daily at midnight
+    # Schedule prayer reminders to be refreshed daily at midnight Singapore time
     scheduler.add_job(
         schedule_all_prayer_reminders,
         'cron',
         hour=0,
         minute=0,
+        timezone="Asia/Singapore",
         args=[scheduler, bot],
         id='daily_prayer_refresh',
         replace_existing=True
     )
-    logger.info("Prayer scheduler setup complete")
+    logger.info("Prayer scheduler setup complete - daily refresh at 00:00 SGT")

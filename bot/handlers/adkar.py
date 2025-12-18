@@ -1,15 +1,24 @@
 """Adkar-related command handlers"""
 
 import logging
-from aiogram import Router, F
+from aiogram import Router, F, Bot
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from database.models import UserSettings
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 logger = logging.getLogger(__name__)
 router = Router()
+
+# Global scheduler reference (will be set during initialization)
+_scheduler: AsyncIOScheduler = None
+
+def set_scheduler(scheduler: AsyncIOScheduler):
+    """Set the scheduler reference for use in handlers"""
+    global _scheduler
+    _scheduler = scheduler
 
 
 @router.message(Command("morningadkar"))
@@ -89,6 +98,7 @@ async def callback_morning_adkar(callback: CallbackQuery, session: AsyncSession)
     """Handle morning adkar callbacks"""
     user_id = callback.from_user.id
     enable = callback.data == "morning_on"
+    bot: Bot = callback.bot
     
     try:
         result = await session.execute(
@@ -103,9 +113,14 @@ async def callback_morning_adkar(callback: CallbackQuery, session: AsyncSession)
         settings.morning_adkar = enable
         await session.commit()
         
+        # Reschedule immediately
+        if _scheduler:
+            from bot.schedulers.adkar_scheduler import schedule_adkar_for_user
+            await schedule_adkar_for_user(_scheduler, bot, user_id, settings)
+        
         if enable:
             logger.info(f"Morning adkar enabled for user {user_id}")
-            text = "🌅 *Morning Adkar Enabled*\n\nYou will receive morning adkar 15 mins after Fajr."
+            text = "🌅 *Morning Adkar Enabled*\n\nYou will receive morning adkar 15 mins after Subuh azan (Fajr time)."
         else:
             logger.info(f"Morning adkar disabled for user {user_id}")
             text = "❌ *Morning Adkar Disabled*"
@@ -123,6 +138,7 @@ async def callback_evening_adkar(callback: CallbackQuery, session: AsyncSession)
     """Handle evening adkar callbacks"""
     user_id = callback.from_user.id
     enable = callback.data == "evening_on"
+    bot: Bot = callback.bot
     
     try:
         result = await session.execute(
@@ -136,6 +152,11 @@ async def callback_evening_adkar(callback: CallbackQuery, session: AsyncSession)
         
         settings.evening_adkar = enable
         await session.commit()
+        
+        # Reschedule immediately
+        if _scheduler:
+            from bot.schedulers.adkar_scheduler import schedule_adkar_for_user
+            await schedule_adkar_for_user(_scheduler, bot, user_id, settings)
         
         if enable:
             logger.info(f"Evening adkar enabled for user {user_id}")
@@ -157,6 +178,7 @@ async def callback_sleep_adkar(callback: CallbackQuery, session: AsyncSession):
     """Handle sleep adkar callbacks"""
     user_id = callback.from_user.id
     enable = callback.data == "sleep_on"
+    bot: Bot = callback.bot
     
     try:
         result = await session.execute(
@@ -170,6 +192,11 @@ async def callback_sleep_adkar(callback: CallbackQuery, session: AsyncSession):
         
         settings.sleep_adkar = enable
         await session.commit()
+        
+        # Reschedule immediately
+        if _scheduler:
+            from bot.schedulers.adkar_scheduler import schedule_adkar_for_user
+            await schedule_adkar_for_user(_scheduler, bot, user_id, settings)
         
         if enable:
             logger.info(f"Sleep adkar enabled for user {user_id}")
@@ -190,6 +217,7 @@ async def callback_sleep_adkar(callback: CallbackQuery, session: AsyncSession):
 async def callback_allahu_allah(callback: CallbackQuery, session: AsyncSession):
     """Handle Allahu Allah dhikr callbacks"""
     user_id = callback.from_user.id
+    bot: Bot = callback.bot
     
     interval_map = {
         "allah_2h": 2,
@@ -212,23 +240,14 @@ async def callback_allahu_allah(callback: CallbackQuery, session: AsyncSession):
         settings.allahu_allah_interval = interval
         await session.commit()
         
+        # Reschedule immediately (this will also send immediate message if enabled)
+        if _scheduler:
+            from bot.schedulers.adkar_scheduler import schedule_adkar_for_user
+            await schedule_adkar_for_user(_scheduler, bot, user_id, settings)
+        
         if interval:
             logger.info(f"Allahu Allah dhikr enabled for user {user_id} - every {interval} hours")
-            
-            # Send immediate reminder when enabled (as per requirements screenshot)
-            immediate_text = (
-                "💝 *Allahu Allah Reminder*\n\n"
-                "Continuous Dhikr — every breath can be remembrance of Allah:\n"
-                "• Breathe *Allahu Allah* silently and connect your breath to Allah\n"
-                "• Ask Allah for help in maintaining this Dhikr and staying mindful throughout the day\n"
-                "• Renew your intention (Niyyah) with every pause and breath\n"
-                "• Take a deep breath, feel gratitude for Allah's blessings\n"
-                "• Optional: Add a short personal dua from your heart\n"
-                "• Let this Dhikr inspire patience, sincerity, and mindfulness in all actions"
-            )
-            await callback.message.answer(immediate_text, parse_mode="Markdown")
-            
-            text = f"💝 *Allahu Allah Dhikr Enabled*\n\nYou will receive reminders every {interval} hours."
+            text = f"💝 *Allahu Allah Dhikr Enabled*\n\nYou have received your first reminder. You will continue to receive reminders every {interval} hours."
         else:
             logger.info(f"Allahu Allah dhikr disabled for user {user_id}")
             text = "❌ *Allahu Allah Dhikr Disabled*"
