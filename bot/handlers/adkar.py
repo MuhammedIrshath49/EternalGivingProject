@@ -214,6 +214,20 @@ async def callback_allahu_allah(callback: CallbackQuery, session: AsyncSession):
         
         if interval:
             logger.info(f"Allahu Allah dhikr enabled for user {user_id} - every {interval} hours")
+            
+            # Send immediate reminder when enabled (as per requirements screenshot)
+            immediate_text = (
+                "💝 *Allahu Allah Reminder*\n\n"
+                "Continuous Dhikr — every breath can be remembrance of Allah:\n"
+                "• Breathe *Allahu Allah* silently and connect your breath to Allah\n"
+                "• Ask Allah for help in maintaining this Dhikr and staying mindful throughout the day\n"
+                "• Renew your intention (Niyyah) with every pause and breath\n"
+                "• Take a deep breath, feel gratitude for Allah's blessings\n"
+                "• Optional: Add a short personal dua from your heart\n"
+                "• Let this Dhikr inspire patience, sincerity, and mindfulness in all actions"
+            )
+            await callback.message.answer(immediate_text, parse_mode="Markdown")
+            
             text = f"💝 *Allahu Allah Dhikr Enabled*\n\nYou will receive reminders every {interval} hours."
         else:
             logger.info(f"Allahu Allah dhikr disabled for user {user_id}")
