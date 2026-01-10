@@ -332,8 +332,17 @@ async def cmd_resources(message: Message):
         "Latest Articles": "📰",
         "Awrad": "🌙",
         "Handbooks": "📕",
-        "Virtues of Islamic Months": "✨"
+        "Virtues of Islamic Months": "✨",
+        "Friday Khutbah": "🕌"
     }
+    
+    # Add Friday Khutbah as first category
+    keyboard_buttons.append([
+        InlineKeyboardButton(
+            text="🕌 FRIDAY KHUTBAH", 
+            callback_data="resource_cat_Friday Khutbah"
+        )
+    ])
     
     for category in categories:
         icon = category_icons.get(category, "📄")
@@ -358,6 +367,33 @@ async def cmd_resources(message: Message):
 async def callback_resource_category(callback: CallbackQuery):
     """Handle resource category selection"""
     category = callback.data.replace("resource_cat_", "")
+    
+    # Special handling for Friday Khutbah
+    if category == "Friday Khutbah":
+        from config import KHUTBAH_MUIS_PAGE
+        
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="📖 Access MUIS Khutbah Repository", url=KHUTBAH_MUIS_PAGE)],
+            [InlineKeyboardButton(text="⬅️ Back to Categories", callback_data="resource_back")]
+        ])
+        
+        text = (
+            "🕌 *Friday Khutbah*\n\n"
+            "Welcome to the Friday Khutbah section!\n\n"
+            "*Automatic Delivery:*\n"
+            "• You will receive the latest Friday Khutbah PDF automatically every Friday at 12:00 PM SGT\n"
+            "• The khutbah is sourced from MUIS (Majlis Ugama Islam Singapura)\n\n"
+            "*Access Full Repository:*\n"
+            "• Click the button below to browse nearly 1,000 khutbah articles\n"
+            "• Available in English, Malay, and Tamil\n"
+            "• Topics include filial piety, divine assistance, Islamic celebrations, and more\n\n"
+            "May Allah grant us beneficial knowledge 🤲"
+        )
+        
+        await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="Markdown")
+        await callback.answer()
+        return
+    
     resources = await get_resources_by_category(category)
     
     if not resources:
@@ -417,8 +453,17 @@ async def callback_resource_back(callback: CallbackQuery):
         "Latest Articles": "📰",
         "Awrad": "🌙",
         "Handbooks": "📕",
-        "Virtues of Islamic Months": "✨"
+        "Virtues of Islamic Months": "✨",
+        "Friday Khutbah": "🕌"
     }
+    
+    # Add Friday Khutbah as first category
+    keyboard_buttons.append([
+        InlineKeyboardButton(
+            text="🕌 FRIDAY KHUTBAH", 
+            callback_data="resource_cat_Friday Khutbah"
+        )
+    ])
     
     for category in categories:
         icon = category_icons.get(category, "📄")
@@ -453,9 +498,9 @@ async def cmd_feedback(message: Message):
     await message.answer(text, parse_mode="Markdown", disable_web_page_preview=True)
 
 
-@router.message()
+@router.message(F.text)
 async def fallback_handler(message: Message):
-    """Handle unknown commands and messages"""
+    """Handle unknown commands and messages (text only)"""
     await message.answer(
         "❓ I didn't understand that.\n\nPlease use /help to see available commands.",
         parse_mode="Markdown"
