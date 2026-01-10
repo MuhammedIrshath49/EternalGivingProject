@@ -4,14 +4,21 @@ import logging
 from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from config import (
     AMAL_JARIAH_MONTH,
     AMAL_JARIAH_COUNTRY,
     AMAL_JARIAH_PRICE,
     AMAL_JARIAH_CONTACT,
-    AMAL_JARIAH_WEBSITE
+    AMAL_JARIAH_WEBSITE,
+    INSTITUTE_NAME,
+    DONATION_PAYNOW_NUMBER,
+    DONATION_CONTACT_WHATSAPP,
+    STANDING_INSTRUCTION_ENABLED
 )
 from bot.utils.resources_api import get_resource_categories, get_resources_by_category
+from database.models import StandingInstruction, DonationType, DonationFrequency
 
 logger = logging.getLogger(__name__)
 router = Router()
@@ -35,17 +42,25 @@ async def cmd_tasbih(message: Message):
 @router.message(Command("amaljariah"))
 async def cmd_amaljariah(message: Message):
     """Handle /amaljariah command"""
-    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+    keyboard_buttons = [
         [InlineKeyboardButton(text="🌹 AMAL JARIAH PROJECTS", callback_data="amal_jariah")],
         [InlineKeyboardButton(text="🎁 HADIAH", callback_data="amal_hadiah")],
         [InlineKeyboardButton(text="📚 CLASS FEES", callback_data="amal_class")],
         [InlineKeyboardButton(text="📢 DAWAH PROJECTS", callback_data="amal_dawah")],
         [InlineKeyboardButton(text="👶 SPONSOR A ORPHAN", callback_data="amal_orphan")]
-    ])
+    ]
+    
+    # Add standing instruction option if enabled
+    if STANDING_INSTRUCTION_ENABLED:
+        keyboard_buttons.append(
+            [InlineKeyboardButton(text="🔄 SETUP STANDING INSTRUCTION", callback_data="setup_standing_instruction")]
+        )
+    
+    keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_buttons)
     
     text = (
         "                           ۞﷽۞\n\n"
-        "Thank you for your interest in contributing to the Rose of Madinah Amal Project!\n\n"
+        f"Thank you for your interest in contributing to the *{INSTITUTE_NAME}*!\n\n"
         "To make your donation, Please select which project you are interested in contributing to:"
     )
     
@@ -70,16 +85,20 @@ async def callback_amal_jariah(callback: CallbackQuery):
     
     # QR code instructions text
     text = (
-        f"Thank you for your interest in contributing to the Rose of Madinah *{project_name}*!\n\n"
+        f"Thank you for your interest in contributing to the *{INSTITUTE_NAME}* - *{project_name}*!\n\n"
         "To make your donation, please follow these steps:\n\n"
-        "1. *Scan the QR Code*: You can save the QR code below and make your PayNow transfer by scanning it.\n\n"
-        "2. *Send a WhatsApp Message*: After your transfer, kindly send a WhatsApp message to *82681357* with:\n"
+        f"1. *PayNow Transfer*: Use PayNow to transfer to *{DONATION_PAYNOW_NUMBER}*\n"
+        "   You can scan the QR code below or enter the number directly.\n\n"
+        f"2. *Send Confirmation*: After your transfer, send a WhatsApp message to *{DONATION_CONTACT_WHATSAPP}* with:\n"
         "   • A screenshot of the donation transfer\n"
-        f"   • The project name: *{project_name}*\n\n"
+        f"   • The project name: *{project_name}*\n"
+        f"   • Your name (as registered in the bot)\n\n"
         "This will help us track your contribution and ensure it is allocated correctly to the project.\n\n"
-        "For any queries regarding Sadaqah, Wakaf, or Infaq contributions to any project, "
-        "please don't hesitate to contact *82681357*.\n\n"
-        "Thank you for your generous support!"
+        "💡 *Note:* All donations support the growth and operational needs of our institute, "
+        "including resources, printing materials, and educational programs.\n\n"
+        "For queries regarding Sadaqah, Wakaf, or Infaq contributions, "
+        f"please contact *{DONATION_CONTACT_WHATSAPP}*.\n\n"
+        "جَزَاكَ ٱللَّٰهُ خَيْرًا for your generous support! 🤲"
     )
     
     # Send the QR code image
@@ -97,6 +116,206 @@ async def callback_amal_jariah(callback: CallbackQuery):
         await callback.message.answer(text, parse_mode="Markdown")
     
     await callback.answer()
+
+
+@router.callback_query(F.data == "setup_standing_instruction")
+async def callback_setup_standing_instruction(callback: CallbackQuery):
+    """Handle standing instruction setup"""
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🌹 Amal Jariah Project", callback_data="si_amal_jariah")],
+        [InlineKeyboardButton(text="🎁 Hadiah to Teacher", callback_data="si_amal_hadiah")],
+        [InlineKeyboardButton(text="📚 Class Fees", callback_data="si_amal_class")],
+        [InlineKeyboardButton(text="📢 Dawah Projects", callback_data="si_amal_dawah")],
+        [InlineKeyboardButton(text="👶 Sponsor A Orphan", callback_data="si_amal_orphan")],
+        [InlineKeyboardButton(text="⬅️ Back", callback_data="back_to_main_amal")]
+    ])
+    
+    text = (
+        f"🔄 *Setup Standing Instruction*\n\n"
+        f"Set up a recurring monthly donation to support the *{INSTITUTE_NAME}* continuously!\n\n"
+        "Benefits:\n"
+        "• Automated reminders for your monthly donations\n"
+        "• Consistent support for Islamic education\n"
+        "• Track your ongoing contributions\n\n"
+        "Please select which project you'd like to support regularly:"
+    )
+    
+    await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="Markdown")
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("si_"))
+async def callback_standing_instruction_project(callback: CallbackQuery):
+    """Handle standing instruction project selection"""
+    project_key = callback.data.replace("si_", "")
+    
+    project_names = {
+        "amal_jariah": "Amal Jariah Project",
+        "amal_hadiah": "Hadiah to Teacher",
+        "amal_class": "Class Fees",
+        "amal_dawah": "Dawah Projects",
+        "amal_orphan": "Sponsor A Orphan"
+    }
+    
+    project_name = project_names.get(project_key, "Unknown Project")
+    
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="📅 Monthly ($10)", callback_data=f"si_freq_{project_key}_monthly_10")],
+        [InlineKeyboardButton(text="📅 Monthly ($20)", callback_data=f"si_freq_{project_key}_monthly_20")],
+        [InlineKeyboardButton(text="📅 Monthly ($50)", callback_data=f"si_freq_{project_key}_monthly_50")],
+        [InlineKeyboardButton(text="📅 Monthly (Custom Amount)", callback_data=f"si_custom_{project_key}_monthly")],
+        [InlineKeyboardButton(text="⬅️ Back", callback_data="setup_standing_instruction")]
+    ])
+    
+    text = (
+        f"🔄 *Standing Instruction Setup*\n\n"
+        f"Project: *{project_name}*\n\n"
+        "Please select your monthly donation amount:\n\n"
+        "💡 You will receive a reminder each month to make your donation.\n"
+        "You can cancel or modify your standing instruction anytime using /mydonations"
+    )
+    
+    await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="Markdown")
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("si_freq_"))
+async def callback_confirm_standing_instruction(callback: CallbackQuery, session: AsyncSession):
+    """Confirm and save standing instruction"""
+    from datetime import datetime, timedelta
+    
+    # Parse callback data: si_freq_{project}_{frequency}_{amount}
+    parts = callback.data.replace("si_freq_", "").split("_")
+    project_key = parts[0]
+    frequency = parts[1]
+    amount = parts[2]
+    
+    project_names = {
+        "amal_jariah": "Amal Jariah Project",
+        "amal_hadiah": "Hadiah to Teacher",
+        "amal_class": "Class Fees",
+        "amal_dawah": "Dawah Projects",
+        "amal_orphan": "Sponsor A Orphan"
+    }
+    
+    donation_type_map = {
+        "amal_jariah": DonationType.AMAL_JARIAH,
+        "amal_hadiah": DonationType.HADIAH,
+        "amal_class": DonationType.CLASS_FEES,
+        "amal_dawah": DonationType.DAWAH,
+        "amal_orphan": DonationType.ORPHAN_SPONSORSHIP
+    }
+    
+    project_name = project_names.get(project_key, "Unknown")
+    donation_type = donation_type_map.get(project_key, DonationType.GENERAL)
+    
+    try:
+        # Create standing instruction
+        standing_instruction = StandingInstruction(
+            user_id=callback.from_user.id,
+            donation_type=donation_type,
+            amount=float(amount),
+            frequency=DonationFrequency.MONTHLY,
+            is_active=True,
+            next_donation_date=datetime.now() + timedelta(days=30)
+        )
+        
+        session.add(standing_instruction)
+        await session.commit()
+        
+        text = (
+            f"✅ *Standing Instruction Activated!*\n\n"
+            f"Project: *{project_name}*\n"
+            f"Amount: *${amount}*\n"
+            f"Frequency: *Monthly*\n\n"
+            f"You will receive a reminder next month to make your donation via PayNow to *{DONATION_PAYNOW_NUMBER}*.\n\n"
+            "Use /mydonations to view or manage your standing instructions.\n\n"
+            "جَزَاكَ ٱللَّٰهُ خَيْرًا for your commitment to continuous support! 🤲"
+        )
+        
+        await callback.message.edit_text(text, parse_mode="Markdown")
+        
+    except Exception as e:
+        logger.error(f"Error creating standing instruction: {e}")
+        await callback.message.edit_text(
+            "❌ Sorry, there was an error setting up your standing instruction. Please try again later.",
+            parse_mode="Markdown"
+        )
+    
+    await callback.answer()
+
+
+@router.callback_query(F.data == "back_to_main_amal")
+async def callback_back_to_main_amal(callback: CallbackQuery):
+    """Go back to main amal menu"""
+    keyboard_buttons = [
+        [InlineKeyboardButton(text="🌹 AMAL JARIAH PROJECTS", callback_data="amal_jariah")],
+        [InlineKeyboardButton(text="🎁 HADIAH", callback_data="amal_hadiah")],
+        [InlineKeyboardButton(text="📚 CLASS FEES", callback_data="amal_class")],
+        [InlineKeyboardButton(text="📢 DAWAH PROJECTS", callback_data="amal_dawah")],
+        [InlineKeyboardButton(text="👶 SPONSOR A ORPHAN", callback_data="amal_orphan")]
+    ]
+    
+    if STANDING_INSTRUCTION_ENABLED:
+        keyboard_buttons.append(
+            [InlineKeyboardButton(text="🔄 SETUP STANDING INSTRUCTION", callback_data="setup_standing_instruction")]
+        )
+    
+    keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_buttons)
+    
+    text = (
+        "                           ۞﷽۞\n\n"
+        f"Thank you for your interest in contributing to the *{INSTITUTE_NAME}*!\n\n"
+        "To make your donation, Please select which project you are interested in contributing to:"
+    )
+    
+    await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="Markdown")
+    await callback.answer()
+
+
+@router.message(Command("mydonations"))
+async def cmd_my_donations(message: Message, session: AsyncSession):
+    """View and manage standing instructions"""
+    user_id = message.from_user.id
+    
+    try:
+        result = await session.execute(
+            select(StandingInstruction).where(
+                StandingInstruction.user_id == user_id,
+                StandingInstruction.is_active == True
+            )
+        )
+        instructions = result.scalars().all()
+        
+        if not instructions:
+            text = (
+                "📊 *Your Donations*\n\n"
+                "You don't have any active standing instructions yet.\n\n"
+                "Use /amaljariah to set up recurring donations!"
+            )
+            await message.answer(text, parse_mode="Markdown")
+            return
+        
+        text = "📊 *Your Active Standing Instructions*\n\n"
+        
+        for inst in instructions:
+            text += (
+                f"• *{inst.donation_type.value.replace('_', ' ').title()}*\n"
+                f"  Amount: ${inst.amount}\n"
+                f"  Frequency: {inst.frequency.value.title()}\n"
+                f"  Next: {inst.next_donation_date.strftime('%d %b %Y') if inst.next_donation_date else 'Not scheduled'}\n\n"
+            )
+        
+        text += "\nUse /amaljariah to add more or modify your donations."
+        
+        await message.answer(text, parse_mode="Markdown")
+        
+    except Exception as e:
+        logger.error(f"Error fetching donations for user {user_id}: {e}")
+        await message.answer(
+            "❌ Sorry, there was an error retrieving your donations.",
+            parse_mode="Markdown"
+        )
 
 
 @router.message(Command("resources"))

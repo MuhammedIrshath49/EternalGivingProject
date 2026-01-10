@@ -35,6 +35,18 @@ DEFAULT_CITY = os.getenv("DEFAULT_CITY", "Singapore")
 DEFAULT_COUNTRY = os.getenv("DEFAULT_COUNTRY", "Singapore")
 PRAYER_API_URL = "https://api.aladhan.com/v1/timingsByCity"
 PRAYER_METHOD = 3  # Muslim World League
+# Note: Singapore uses MUIS official CSV data (MuslimPrayerTimetable2026.csv)
+
+# Friday Khutbah Configuration
+KHUTBAH_PDF_URL = os.getenv("KHUTBAH_PDF_URL", "")  # URL to fetch the latest Khutbah PDF
+KHUTBAH_MUIS_PAGE = "https://www.muis.gov.sg/resources/khutbah-and-religious-advice/khutbah/"
+KHUTBAH_ENABLED = os.getenv("KHUTBAH_ENABLED", "true").lower() == "true"
+
+# Donation Configuration (New Institute - Ustaz Sameer)
+INSTITUTE_NAME = os.getenv("INSTITUTE_NAME", "Rose of Madinah Institute")
+DONATION_PAYNOW_NUMBER = os.getenv("DONATION_PAYNOW_NUMBER", "82681357")
+DONATION_CONTACT_WHATSAPP = os.getenv("DONATION_CONTACT_WHATSAPP", "82681357")
+STANDING_INSTRUCTION_ENABLED = os.getenv("STANDING_INSTRUCTION_ENABLED", "true").lower() == "true"
 
 # Amal Jariah Configuration
 AMAL_JARIAH_MONTH = os.getenv("AMAL_JARIAH_MONTH", "DEC 2025")

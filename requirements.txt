@@ -18,3 +18,9 @@ python-dotenv
 
 # HTTP requests (for prayer API)
 requests
+
+# HTML parsing for khutbah scraping
+beautifulsoup4
+
+# Brotli compression support
+brotli

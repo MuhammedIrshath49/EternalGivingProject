@@ -63,6 +63,7 @@ async def cmd_start(message: Message, session: AsyncSession):
         "• /unremind — Disable ṣalāh reminders\n"
         "• /tasbih — Dhikr & remembrance\n"
         "• /amaljariah — Support ʿAmal Jāriyah\n"
+        "• /mydonations — Manage recurring donations\n"
         "• /resources — Access Islamic resources\n"
         "• /feedback — Share feedback\n\n"
         "You can also use the *Menu* button below ⬇️\n\n"

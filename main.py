@@ -17,6 +17,7 @@ from database import init_db, close_db
 from bot.handlers import start, prayer, adkar, misc
 from bot.schedulers.prayer_scheduler import setup_prayer_scheduler, schedule_all_prayer_reminders
 from bot.schedulers.adkar_scheduler import setup_adkar_scheduler, schedule_all_adkar
+from bot.schedulers.khutbah_scheduler import setup_khutbah_scheduler
 
 # Configure logging
 logging.basicConfig(
@@ -50,6 +51,7 @@ async def on_startup(bot: Bot, scheduler: AsyncIOScheduler):
         BotCommand(command="allahuallah", description="Configure Allahu Allah reminders"),
         BotCommand(command="tasbih", description="Get tasbih reminder"),
         BotCommand(command="amaljariah", description="Support the project"),
+        BotCommand(command="mydonations", description="Manage recurring donations"),
         BotCommand(command="resources", description="Access Islamic resources"),
         BotCommand(command="feedback", description="Send feedback"),
     ]
@@ -59,6 +61,7 @@ async def on_startup(bot: Bot, scheduler: AsyncIOScheduler):
     # Setup schedulers
     setup_prayer_scheduler(scheduler, bot)
     setup_adkar_scheduler(scheduler, bot)
+    setup_khutbah_scheduler(scheduler, bot)
     
     # Schedule initial reminders
     await schedule_all_prayer_reminders(scheduler, bot)
