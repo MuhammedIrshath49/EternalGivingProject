@@ -24,3 +24,6 @@ beautifulsoup4
 
 # Brotli compression support
 brotli
+
+# Timezone support
+pytz

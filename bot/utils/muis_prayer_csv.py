@@ -5,8 +5,12 @@ import logging
 from datetime import datetime
 from typing import Optional, Dict
 import os
+import pytz
 
 logger = logging.getLogger(__name__)
+
+# Singapore timezone
+SINGAPORE_TZ = pytz.timezone('Asia/Singapore')
 
 
 def get_prayer_times_from_csv(date: Optional[datetime] = None) -> Optional[Dict[str, str]]:
@@ -14,13 +18,13 @@ def get_prayer_times_from_csv(date: Optional[datetime] = None) -> Optional[Dict[
     Get prayer times from the official MUIS CSV file
     
     Args:
-        date: The date to get prayer times for (defaults to today)
+        date: The date to get prayer times for (defaults to today in Singapore timezone)
     
     Returns:
         Dictionary with prayer times or None if not found
     """
     if date is None:
-        date = datetime.now()
+        date = datetime.now(SINGAPORE_TZ)
     
     # Format date to match CSV format (YYYY-MM-DD)
     date_str = date.strftime("%Y-%m-%d")
@@ -67,12 +71,12 @@ def get_readable_date(date: Optional[datetime] = None) -> str:
     Get a human-readable date string
     
     Args:
-        date: The date (defaults to today)
+        date: The date (defaults to today in Singapore timezone)
     
     Returns:
         Formatted date string
     """
     if date is None:
-        date = datetime.now()
+        date = datetime.now(SINGAPORE_TZ)
     
     return date.strftime("%d %b %Y")

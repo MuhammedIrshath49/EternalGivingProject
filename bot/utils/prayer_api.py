@@ -4,6 +4,7 @@ import logging
 import aiohttp
 from typing import Optional, Tuple, Dict
 from datetime import datetime
+import pytz
 from config import PRAYER_API_URL, PRAYER_METHOD
 from bot.utils.muis_prayer_csv import get_prayer_times_from_csv, get_readable_date
 
@@ -14,12 +15,15 @@ async def get_muis_prayer_times() -> Tuple[Optional[Dict[str, str]], Optional[st
     """
     Get prayer times from MUIS (Majlis Ugama Islam Singapura) official CSV data
     This is the authoritative source for Singapore prayer times - directly from MUIS timetable.
+    Uses Singapore timezone to ensure correct date regardless of server location.
     
     Returns:
         Tuple of (timings dict, readable date string) or (None, None) on error
     """
     try:
-        today = datetime.now()
+        # Use Singapore timezone
+        singapore_tz = pytz.timezone('Asia/Singapore')
+        today = datetime.now(singapore_tz)
         timings = get_prayer_times_from_csv(today)
         
         if timings:
