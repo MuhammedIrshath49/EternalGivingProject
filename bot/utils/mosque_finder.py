@@ -4,6 +4,7 @@ import logging
 import aiohttp
 import math
 from typing import Optional, List, Dict
+from bot.utils.singapore_mosques import find_singapore_mosques, is_singapore_location
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,9 @@ def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
 
 async def find_nearby_mosques(latitude: float, longitude: float, limit: int = 5) -> Optional[List[Dict]]:
     """
-    Find nearby mosques using Overpass API (OpenStreetMap query service)
+    Find nearby mosques using:
+    1. Singapore curated dataset (for SG locations) - fast, reliable, complete coverage
+    2. Overpass API fallback (for international locations) - OSM data
     
     Args:
         latitude: Latitude coordinate
@@ -35,23 +38,34 @@ async def find_nearby_mosques(latitude: float, longitude: float, limit: int = 5)
     Returns:
         List of mosque dictionaries or None on error
     """
+    # First try Singapore curated dataset if location is in Singapore
+    if is_singapore_location(latitude, longitude):
+        logger.info(f"Using Singapore mosque dataset for ({latitude}, {longitude})")
+        sg_mosques = find_singapore_mosques(latitude, longitude, limit=limit)
+        if sg_mosques:
+            logger.info(f"Found {len(sg_mosques)} mosques from Singapore dataset")
+            return sg_mosques
+        logger.warning(f"No Singapore mosques found within range for ({latitude}, {longitude})")
+        return None
+    
+    # Fallback to Overpass API for international locations
+    logger.info(f"Using Overpass API for international location ({latitude}, {longitude})")
     try:
-        # Use Overpass API to find mosques within 5km radius
+        # Use Overpass API to find mosques within 10km radius
         # Overpass is specifically designed for POI queries and doesn't have the same rate limits
         overpass_url = "https://overpass-api.de/api/interpreter"
         
-        # Search radius in meters (5000m = 5km)
-        radius = 5000
+        # Search radius in meters (10000m = 10km)
+        radius = 10000
         
-        # Overpass QL query to find mosques
+        # Optimized Overpass QL query to find mosques
         # amenity=place_of_worship + religion=muslim covers most mosques
+        # Increased timeout and simplified query for better performance
         overpass_query = f"""
-        [out:json][timeout:10];
+        [out:json][timeout:25];
         (
           node["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{latitude},{longitude});
           way["amenity"="place_of_worship"]["religion"="muslim"](around:{radius},{latitude},{longitude});
-          node["building"="mosque"](around:{radius},{latitude},{longitude});
-          way["building"="mosque"](around:{radius},{latitude},{longitude});
         );
         out center;
         """
@@ -65,7 +79,7 @@ async def find_nearby_mosques(latitude: float, longitude: float, limit: int = 5)
                 overpass_url, 
                 data={"data": overpass_query},
                 headers=headers,
-                timeout=aiohttp.ClientTimeout(total=15)
+                timeout=aiohttp.ClientTimeout(total=30)
             ) as response:
                 if response.status == 200:
                     data = await response.json()

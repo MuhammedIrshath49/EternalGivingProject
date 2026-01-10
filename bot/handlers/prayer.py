@@ -366,14 +366,24 @@ async def handle_location(message: Message, session: AsyncSession, state: FSMCon
     
     if not mosques:
         logger.warning(f"No mosques found for user {user_id} at ({latitude}, {longitude})")
-        await message.answer(
-            "❌ No masājid found nearby within 10km radius.\n\n"
-            "Try:\n"
-            "• Sharing a different location\n"
-            "• Using a location closer to known mosque areas\n\n"
-            "Note: This service uses OpenStreetMap data which may not have all mosques listed.",
-            parse_mode="Markdown"
-        )
+        
+        # Check if location is in Singapore for better error message
+        from bot.utils.singapore_mosques import is_singapore_location
+        if is_singapore_location(latitude, longitude):
+            error_msg = (
+                "❌ No masājid found within 10km of your location.\n\n"
+                "Please share a location closer to residential areas in Singapore."
+            )
+        else:
+            error_msg = (
+                "❌ No masājid found nearby within 10km radius.\n\n"
+                "Try:\n"
+                "• Sharing a different location\n"
+                "• Using a location closer to known mosque areas\n\n"
+                "Note: International mosque data comes from OpenStreetMap which may not have all mosques listed."
+            )
+        
+        await message.answer(error_msg, parse_mode="Markdown")
         return
     
     logger.info(f"Found {len(mosques)} mosques for user {user_id}")
