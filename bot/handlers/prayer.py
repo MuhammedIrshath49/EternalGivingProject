@@ -2,7 +2,9 @@
 
 import logging
 from aiogram import Router, F
-from aiogram.filters import Command
+from aiogram.filters import Command, StateFilter
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, Location
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,6 +15,11 @@ from config import DEFAULT_CITY, DEFAULT_COUNTRY
 
 logger = logging.getLogger(__name__)
 router = Router()
+
+
+class LocationStates(StatesGroup):
+    """States for location setting flow"""
+    waiting_for_location = State()
 
 
 @router.message(Command("prayertimes"))
@@ -64,26 +71,40 @@ async def cmd_pray_where(message: Message):
 
 
 @router.message(Command("setlocation"))
-async def cmd_set_location(message: Message, session: AsyncSession):
+async def cmd_set_location(message: Message, session: AsyncSession, state: FSMContext):
     """Handle /setlocation command to manually set city"""
     # Extract city from command (e.g., /setlocation London, UK)
     args = message.text.split(maxsplit=1)
     
     if len(args) < 2:
+        # Set state to wait for location input
+        await state.set_state(LocationStates.waiting_for_location)
+        
+        # Add quick select buttons for common Singapore locations
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="🇸🇬 Singapore", callback_data="loc_Singapore, Singapore")],
+            [InlineKeyboardButton(text="🇦🇪 Dubai, UAE", callback_data="loc_Dubai, UAE")],
+            [InlineKeyboardButton(text="🇬🇧 London, UK", callback_data="loc_London, United Kingdom")],
+            [InlineKeyboardButton(text="🇺🇸 New York, USA", callback_data="loc_New York, USA")],
+            [InlineKeyboardButton(text="🇲🇾 Kuala Lumpur, Malaysia", callback_data="loc_Kuala Lumpur, Malaysia")],
+        ])
+        
         await message.answer(
             "📍 *Set Your Location*\n\n"
-            "To set your location for accurate prayer times, use:\n"
-            "`/setlocation City, Country`\n\n"
+            "*Option 1:* Tap a button below for quick selection\n\n"
+            "*Option 2:* Type your location in this format:\n"
+            "`City, Country`\n\n"
             "*Examples:*\n"
-            "• `/setlocation Singapore, Singapore`\n"
-            "• `/setlocation London, United Kingdom`\n"
-            "• `/setlocation Dubai, UAE`\n"
-            "• `/setlocation New York, USA`",
+            "• `Singapore, Singapore`\n"
+            "• `London, United Kingdom`\n"
+            "• `Dubai, UAE`\n"
+            "• `Jakarta, Indonesia`",
+            reply_markup=keyboard,
             parse_mode="Markdown"
         )
         return
     
-    # Parse city and country
+    # Parse city and country from command
     location_parts = args[1].split(',')
     city = location_parts[0].strip()
     country = location_parts[1].strip() if len(location_parts) > 1 else city
@@ -106,6 +127,9 @@ async def cmd_set_location(message: Message, session: AsyncSession):
         await session.commit()
         
         logger.info(f"Location updated for user {user_id}: {city}, {country}")
+        
+        # Clear state if it was set
+        await state.clear()
         
         # Fetch and show prayer times for the new location
         timings, date = await get_prayer_times(city, country)
@@ -134,15 +158,151 @@ async def cmd_set_location(message: Message, session: AsyncSession):
     except Exception as e:
         logger.error(f"Error setting location for {user_id}: {e}")
         await session.rollback()
+        await state.clear()
+        await message.answer("❌ Error updating location. Please try again.", parse_mode="Markdown")
+
+
+@router.callback_query(F.data.startswith("loc_"))
+async def callback_quick_location(callback: CallbackQuery, session: AsyncSession, state: FSMContext):
+    """Handle quick location selection buttons"""
+    location_str = callback.data.replace("loc_", "")
+    location_parts = location_str.split(',')
+    city = location_parts[0].strip()
+    country = location_parts[1].strip() if len(location_parts) > 1 else city
+    
+    user_id = callback.from_user.id
+    
+    try:
+        # Update user settings
+        result = await session.execute(
+            select(UserSettings).where(UserSettings.user_id == user_id)
+        )
+        settings = result.scalar_one_or_none()
+        
+        if not settings:
+            settings = UserSettings(user_id=user_id)
+            session.add(settings)
+        
+        settings.city = city
+        settings.country = country
+        await session.commit()
+        
+        logger.info(f"Location updated via button for user {user_id}: {city}, {country}")
+        
+        # Clear state
+        await state.clear()
+        
+        # Fetch and show prayer times for the new location
+        timings, date = await get_prayer_times(city, country)
+        
+        if timings:
+            text = (
+                f"✅ *Location Updated!*\n\n"
+                f"🕋 *Ṣalāh Times for {city}, {country}*\n"
+                f"{date}\n\n"
+                f"🌅 Fajr: {timings['Fajr']}\n"
+                f"🌄 Sunrise: {timings['Sunrise']}\n"
+                f"☀️ Dhuhr: {timings['Dhuhr']}\n"
+                f"🌤 Asr: {timings['Asr']}\n"
+                f"🌇 Maghrib: {timings['Maghrib']}\n"
+                f"🌙 Isha: {timings['Isha']}\n\n"
+                f"May Allah accept our ṣalāh 🤲"
+            )
+        else:
+            text = (
+                f"✅ *Location set to {city}, {country}*\n\n"
+                f"⚠️ Could not fetch prayer times. Please verify the location is correct."
+            )
+        
+        await callback.message.edit_text(text, parse_mode="Markdown")
+        await callback.answer()
+        
+    except Exception as e:
+        logger.error(f"Error setting location via button for {user_id}: {e}")
+        await session.rollback()
+        await state.clear()
+        await callback.answer("❌ Error updating location. Please try again.", show_alert=True)
+
+
+@router.message(StateFilter(LocationStates.waiting_for_location), F.text)
+async def handle_location_text_input(message: Message, session: AsyncSession, state: FSMContext):
+    """Handle text input when waiting for location"""
+    location_parts = message.text.split(',')
+    
+    if len(location_parts) < 2:
+        await message.answer(
+            "⚠️ Please provide both city and country separated by a comma.\n\n"
+            "Example: `Singapore, Singapore`",
+            parse_mode="Markdown"
+        )
+        return
+    
+    city = location_parts[0].strip()
+    country = location_parts[1].strip()
+    user_id = message.from_user.id
+    
+    try:
+        # Update user settings
+        result = await session.execute(
+            select(UserSettings).where(UserSettings.user_id == user_id)
+        )
+        settings = result.scalar_one_or_none()
+        
+        if not settings:
+            settings = UserSettings(user_id=user_id)
+            session.add(settings)
+        
+        settings.city = city
+        settings.country = country
+        await session.commit()
+        
+        logger.info(f"Location updated via text input for user {user_id}: {city}, {country}")
+        
+        # Clear state
+        await state.clear()
+        
+        # Fetch and show prayer times for the new location
+        timings, date = await get_prayer_times(city, country)
+        
+        if timings:
+            text = (
+                f"✅ *Location Updated!*\n\n"
+                f"🕋 *Ṣalāh Times for {city}, {country}*\n"
+                f"{date}\n\n"
+                f"🌅 Fajr: {timings['Fajr']}\n"
+                f"🌄 Sunrise: {timings['Sunrise']}\n"
+                f"☀️ Dhuhr: {timings['Dhuhr']}\n"
+                f"🌤 Asr: {timings['Asr']}\n"
+                f"🌇 Maghrib: {timings['Maghrib']}\n"
+                f"🌙 Isha: {timings['Isha']}\n\n"
+                f"May Allah accept our ṣalāh 🤲"
+            )
+        else:
+            text = (
+                f"✅ *Location set to {city}, {country}*\n\n"
+                f"⚠️ Could not fetch prayer times. Please verify the location is correct."
+            )
+        
+        await message.answer(text, parse_mode="Markdown")
+        
+    except Exception as e:
+        logger.error(f"Error setting location via text for {user_id}: {e}")
+        await session.rollback()
+        await state.clear()
         await message.answer("❌ Error updating location. Please try again.", parse_mode="Markdown")
 
 
 @router.message(F.content_type == "location")
-async def handle_location(message: Message, session: AsyncSession):
+async def handle_location(message: Message, session: AsyncSession, state: FSMContext):
     """Handle location sharing - auto-save location and find mosques"""
+    # Clear any state that might be set
+    await state.clear()
+    
     latitude = message.location.latitude
     longitude = message.location.longitude
     user_id = message.from_user.id
+    
+    logger.info(f"Received location from user {user_id}: lat={latitude}, lon={longitude}")
     
     # Use reverse geocoding to get city/country from coordinates
     import aiohttp
@@ -201,11 +361,22 @@ async def handle_location(message: Message, session: AsyncSession):
     if not city:
         await message.answer("🕌 *Searching for Nearby Masājid*\n\nPlease wait...", parse_mode="Markdown")
     
+    logger.info(f"Searching for mosques near ({latitude}, {longitude})")
     mosques = await find_nearby_mosques(latitude, longitude)
     
     if not mosques:
-        await message.answer("❌ No masājid found nearby. Try a different location.", parse_mode="Markdown")
+        logger.warning(f"No mosques found for user {user_id} at ({latitude}, {longitude})")
+        await message.answer(
+            "❌ No masājid found nearby within 10km radius.\n\n"
+            "Try:\n"
+            "• Sharing a different location\n"
+            "• Using a location closer to known mosque areas\n\n"
+            "Note: This service uses OpenStreetMap data which may not have all mosques listed.",
+            parse_mode="Markdown"
+        )
         return
+    
+    logger.info(f"Found {len(mosques)} mosques for user {user_id}")
     
     # Send each mosque as a venue (with pin on map)
     for i, mosque in enumerate(mosques[:5], 1):
