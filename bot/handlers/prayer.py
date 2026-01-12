@@ -1,6 +1,7 @@
 """Prayer-related command handlers"""
 
 import logging
+from datetime import datetime
 from aiogram import Router, F
 from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
@@ -15,6 +16,24 @@ from config import DEFAULT_CITY, DEFAULT_COUNTRY
 
 logger = logging.getLogger(__name__)
 router = Router()
+
+
+def format_prayer_time(time_24h: str) -> str:
+    """
+    Format prayer time to show both 12-hour (with AM/PM) and 24-hour format
+    
+    Args:
+        time_24h: Time in 24-hour format (e.g., "13:15")
+    
+    Returns:
+        Formatted string with both formats (e.g., "01:15 PM (13:15)")
+    """
+    try:
+        time_obj = datetime.strptime(time_24h, "%H:%M")
+        time_12h = time_obj.strftime("%I:%M %p")
+        return f"{time_12h} ({time_24h})"
+    except:
+        return time_24h
 
 
 class LocationStates(StatesGroup):
@@ -45,12 +64,12 @@ async def cmd_prayer_times(message: Message, session: AsyncSession):
     text = (
         f"🕋 *Ṣalāh Times Today ({city})*\n"
         f"{date}\n\n"
-        f"🌅 Fajr: {timings['Fajr']}\n"
-        f"🌄 Sunrise: {timings['Sunrise']}\n"
-        f"☀️ Dhuhr: {timings['Dhuhr']}\n"
-        f"🌤 Asr: {timings['Asr']}\n"
-        f"🌇 Maghrib: {timings['Maghrib']}\n"
-        f"🌙 Isha: {timings['Isha']}\n\n"
+        f"🌅 Fajr: {format_prayer_time(timings['Fajr'])}\n"
+        f"🌄 Sunrise: {format_prayer_time(timings['Sunrise'])}\n"
+        f"☀️ Dhuhr: {format_prayer_time(timings['Dhuhr'])}\n"
+        f"🌤 Asr: {format_prayer_time(timings['Asr'])}\n"
+        f"🌇 Maghrib: {format_prayer_time(timings['Maghrib'])}\n"
+        f"🌙 Isha: {format_prayer_time(timings['Isha'])}\n\n"
         "May Allah accept our ṣalāh 🤲"
     )
     
@@ -139,12 +158,12 @@ async def cmd_set_location(message: Message, session: AsyncSession, state: FSMCo
                 f"✅ *Location Updated!*\n\n"
                 f"🕋 *Ṣalāh Times for {city}, {country}*\n"
                 f"{date}\n\n"
-                f"🌅 Fajr: {timings['Fajr']}\n"
-                f"🌄 Sunrise: {timings['Sunrise']}\n"
-                f"☀️ Dhuhr: {timings['Dhuhr']}\n"
-                f"🌤 Asr: {timings['Asr']}\n"
-                f"🌇 Maghrib: {timings['Maghrib']}\n"
-                f"🌙 Isha: {timings['Isha']}\n\n"
+                f"🌅 Fajr: {format_prayer_time(timings['Fajr'])}\n"
+                f"🌄 Sunrise: {format_prayer_time(timings['Sunrise'])}\n"
+                f"☀️ Dhuhr: {format_prayer_time(timings['Dhuhr'])}\n"
+                f"🌤 Asr: {format_prayer_time(timings['Asr'])}\n"
+                f"🌇 Maghrib: {format_prayer_time(timings['Maghrib'])}\n"
+                f"🌙 Isha: {format_prayer_time(timings['Isha'])}\n\n"
                 f"May Allah accept our ṣalāh 🤲"
             )
         else:
@@ -200,12 +219,12 @@ async def callback_quick_location(callback: CallbackQuery, session: AsyncSession
                 f"✅ *Location Updated!*\n\n"
                 f"🕋 *Ṣalāh Times for {city}, {country}*\n"
                 f"{date}\n\n"
-                f"🌅 Fajr: {timings['Fajr']}\n"
-                f"🌄 Sunrise: {timings['Sunrise']}\n"
-                f"☀️ Dhuhr: {timings['Dhuhr']}\n"
-                f"🌤 Asr: {timings['Asr']}\n"
-                f"🌇 Maghrib: {timings['Maghrib']}\n"
-                f"🌙 Isha: {timings['Isha']}\n\n"
+                f"🌅 Fajr: {format_prayer_time(timings['Fajr'])}\n"
+                f"🌄 Sunrise: {format_prayer_time(timings['Sunrise'])}\n"
+                f"☀️ Dhuhr: {format_prayer_time(timings['Dhuhr'])}\n"
+                f"🌤 Asr: {format_prayer_time(timings['Asr'])}\n"
+                f"🌇 Maghrib: {format_prayer_time(timings['Maghrib'])}\n"
+                f"🌙 Isha: {format_prayer_time(timings['Isha'])}\n\n"
                 f"May Allah accept our ṣalāh 🤲"
             )
         else:
@@ -269,12 +288,12 @@ async def handle_location_text_input(message: Message, session: AsyncSession, st
                 f"✅ *Location Updated!*\n\n"
                 f"🕋 *Ṣalāh Times for {city}, {country}*\n"
                 f"{date}\n\n"
-                f"🌅 Fajr: {timings['Fajr']}\n"
-                f"🌄 Sunrise: {timings['Sunrise']}\n"
-                f"☀️ Dhuhr: {timings['Dhuhr']}\n"
-                f"🌤 Asr: {timings['Asr']}\n"
-                f"🌇 Maghrib: {timings['Maghrib']}\n"
-                f"🌙 Isha: {timings['Isha']}\n\n"
+                f"🌅 Fajr: {format_prayer_time(timings['Fajr'])}\n"
+                f"🌄 Sunrise: {format_prayer_time(timings['Sunrise'])}\n"
+                f"☀️ Dhuhr: {format_prayer_time(timings['Dhuhr'])}\n"
+                f"🌤 Asr: {format_prayer_time(timings['Asr'])}\n"
+                f"🌇 Maghrib: {format_prayer_time(timings['Maghrib'])}\n"
+                f"🌙 Isha: {format_prayer_time(timings['Isha'])}\n\n"
                 f"May Allah accept our ṣalāh 🤲"
             )
         else:
