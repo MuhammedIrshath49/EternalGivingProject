@@ -2,6 +2,7 @@
 
 import logging
 from datetime import datetime, timedelta
+import pytz
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
@@ -11,6 +12,8 @@ import database.db
 from database.models import UserSettings
 from bot.utils.prayer_api import get_prayer_times
 from config import DEFAULT_CITY, DEFAULT_COUNTRY
+
+SINGAPORE_TZ = pytz.timezone('Asia/Singapore')
 
 logger = logging.getLogger(__name__)
 

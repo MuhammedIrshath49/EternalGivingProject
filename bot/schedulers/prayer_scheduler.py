@@ -2,6 +2,7 @@
 
 import logging
 from datetime import datetime, timedelta
+import pytz
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.date import DateTrigger
 from aiogram import Bot
@@ -10,6 +11,8 @@ import database.db
 from database.models import UserSettings
 from bot.utils.prayer_api import get_prayer_times
 from config import DEFAULT_CITY, DEFAULT_COUNTRY
+
+SINGAPORE_TZ = pytz.timezone('Asia/Singapore')
 
 logger = logging.getLogger(__name__)
 
@@ -35,15 +38,15 @@ async def schedule_user_prayer_reminders(scheduler: AsyncIOScheduler, bot: Bot, 
         logger.error(f"Could not fetch prayer times for user {user_id}")
         return
     
-    now = datetime.now()
+    now = datetime.now(SINGAPORE_TZ)
     
     for prayer in ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha']:
         time_str = timings[prayer]
-        prayer_time = datetime.strptime(time_str, "%H:%M").replace(
+        prayer_time = SINGAPORE_TZ.localize(datetime.strptime(time_str, "%H:%M").replace(
             year=now.year,
             month=now.month,
             day=now.day
-        )
+        ))
         
         # If prayer time has passed, schedule for tomorrow
         if prayer_time < now:
