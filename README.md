@@ -7,12 +7,14 @@ A comprehensive Islamic companion Telegram bot providing accurate prayer times, 
 ## ✨ Features
 
 ### 🕌 Prayer Times
+
 - **Accurate Singapore Prayer Times** from official MUIS CSV data
 - Support for international cities via Aladhan API
 - Dual time display (12-hour AM/PM + 24-hour format)
 - Automatic daily updates
 
 ### ⏰ Smart Reminders
+
 - Prayer reminders (10 minutes before + exact time)
 - Morning Adkar (15 minutes after Fajr)
 - Evening Adkar (30 minutes after Asr)
@@ -20,12 +22,14 @@ A comprehensive Islamic companion Telegram bot providing accurate prayer times, 
 - Customizable Allahu Allah dhikr intervals
 
 ### 📖 Islamic Resources
+
 - Friday Khutbah updates from MUIS
 - Wirdu Amm daily routines
 - Adkar and dhikr guidance
 - Quranic references
 
 ### 📍 Mosque Finder
+
 - Find nearby mosques and musollahs
 - Singapore mosque database integration
 - International mosque search via OpenStreetMap
@@ -34,6 +38,7 @@ A comprehensive Islamic companion Telegram bot providing accurate prayer times, 
 ## 🚀 Quick Start
 
 ### Local Development
+
 ```bash
 # Clone the repository
 git clone https://github.com/MuhammedIrshath49/EternalGivingProject.git
@@ -83,13 +88,17 @@ DEFAULT_COUNTRY=Singapore
 ## 🐳 Docker & CI/CD
 
 ### Docker Image
+
 Multi-platform Docker images are automatically built and published to GitHub Container Registry:
+
 ```bash
 docker pull ghcr.io/muhammedirshath49/eternalgivingproject:latest
 ```
 
 ### GitHub Actions Pipeline
+
 Automated CI/CD workflow includes:
+
 - ✅ Code linting and syntax validation
 - 🐳 Multi-platform Docker builds (amd64, arm64)
 - 📦 Push to GitHub Container Registry
@@ -101,33 +110,36 @@ See [DOCKER.md](DOCKER.md) for detailed Docker documentation.
 ## � CI/CD
 
 ### GitHub Actions Pipeline
+
 Automated CI/CD workflow includes:
+
 - ✅ Code linting and syntax validation (Black, isort, Flake8)
 - 🔒 Security vulnerability scanning (Safety)
 - 🚀 Deployment readiness checks
 - 📊 Automated testing on push and pull requests
-│   ├── handlers/          # Command handlers
-│   │   ├── start.py       # Start & help commands
-│   │   ├── prayer.py      # Prayer times & location
-│   │   ├── adkar.py       # Adkar settings
-│   │   └── misc.py        # Miscellaneous handlers
-│   ├── schedulers/        # Automated tasks
-│   │   ├── prayer_scheduler.py
-│   │   ├── adkar_scheduler.py
-│   │   └── khutbah_scheduler.py
-│   └── utils/             # Helper modules
-│       ├── prayer_api.py  # Prayer times API
-│       ├── muis_prayer_csv.py  # MUIS data parser
-│       ├── mosque_finder.py    # Mosque search
-│       └── khutbah_fetcher.py  # Khutbah scraper
-├── database/              # Database models & migrations
-├── assets/                # Static assets
-├── Dockerfile             # Container definition
-├── docker-compose.yml     # Local development setup
-├── requirements.txt       # Python dependencies
-├── main.py                # Application entry point
-└── config.py              # Configuration management
-```
+  │ ├── handlers/ # Command handlers
+  │ │ ├── start.py # Start & help commands
+  │ │ ├── prayer.py # Prayer times & location
+  │ │ ├── adkar.py # Adkar settings
+  │ │ └── misc.py # Miscellaneous handlers
+  │ ├── schedulers/ # Automated tasks
+  │ │ ├── prayer_scheduler.py
+  │ │ ├── adkar_scheduler.py
+  │ │ └── khutbah_scheduler.py
+  │ └── utils/ # Helper modules
+  │ ├── prayer_api.py # Prayer times API
+  │ ├── muis_prayer_csv.py # MUIS data parser
+  │ ├── mosque_finder.py # Mosque search
+  │ └── khutbah_fetcher.py # Khutbah scraper
+  ├── database/ # Database models & migrations
+  ├── assets/ # Static assets
+  ├── Dockerfile # Container definition
+  ├── docker-compose.yml # Local development setup
+  ├── requirements.txt # Python dependencies
+  ├── main.py # Application entry point
+  └── config.py # Configuration management
+
+````
 
 ## 🔧 Development
 
@@ -141,9 +153,10 @@ flake8 .
 # Format code
 black .
 isort .
-```
+````
 
 ### Database Migrations
+
 ```bash
 python -m database.migrate
 ```
@@ -151,11 +164,13 @@ python -m database.migrate
 ## 🚀 Deployment
 
 ### Railway (Recommended)
+
 1. Connect your GitHub repository to Railway
 2. Set environment variable `API_TOKEN`
 3. Railway auto-detects `Dockerfile` and deploys
 
 ### Manual Deployment
+
 ```bash
 # Pull latest image
 docker pull ghcr.io/muhammedirshath49/eternalgivingproject:latest
@@ -168,8 +183,10 @@ docRailway automatically detects `Procfile` and `requirements.txt`
 
 ### Environment Variables in Railway
 ```
+
 API_TOKEN=your_telegram_bot_token
 DATABASE_URL=automatically_provided_by_railway
+
 - [x] Friday Khutbah notifications
 - [x] Docker containerization
 - [x] CI/CD pipeline
@@ -206,4 +223,4 @@ For support, please open an issue in the GitHub repository.
 
 **May Allah accept our efforts and make this beneficial for the Ummah. 🤲**
 
-*In sha Allah*
+_In sha Allah_

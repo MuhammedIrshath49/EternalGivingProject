@@ -46,29 +46,23 @@ def get_prayer_times_from_csv(date: Optional[datetime] = None) -> Optional[Dict[
             for row in csv_reader:
                 if row['Date'] == date_str:
                     # Map MUIS column names to our expected format
-                    # CSV times are in 12-hour format without AM/PM
-                    # Subuh and Syuruk are AM (morning prayers)
-                    # Zohor and Asar need +12 hours (afternoon prayers)  
-                    # Maghrib and Isyak need +12 hours (evening prayers)
+                    # CSV times use 12-hour format: 01:10 = 1:10 PM, 12:59 = 12:59 PM
+                    # Need to add 12 to hours 01-11 for afternoon/evening prayers
                     
-                    # Helper function to convert to 24-hour format
-                    def convert_to_24h(time_str: str, add_12: bool = False) -> str:
-                        try:
-                            hour, minute = time_str.split(':')
-                            hour = int(hour)
-                            if add_12 and hour != 12:
-                                hour += 12
-                            return f"{hour:02d}:{minute}"
-                        except:
-                            return time_str
+                    def convert_to_24h(time_str: str) -> str:
+                        hour, minute = time_str.split(':')
+                        hour = int(hour)
+                        if hour < 12:  # 01:xx to 11:xx becomes 13:xx to 23:xx
+                            hour += 12
+                        return f"{hour:02d}:{minute}"
                     
                     timings = {
-                        'Fajr': row['Subuh'],  # Already AM
-                        'Sunrise': row['Syuruk'],  # Already AM
-                        'Dhuhr': convert_to_24h(row['Zohor'], add_12=True),  # Convert to PM
-                        'Asr': convert_to_24h(row['Asar'], add_12=True),  # Convert to PM
-                        'Maghrib': convert_to_24h(row['Maghrib'], add_12=True),  # Convert to PM
-                        'Isha': convert_to_24h(row['Isyak'], add_12=True)  # Convert to PM
+                        'Fajr': row['Subuh'],
+                        'Sunrise': row['Syuruk'],
+                        'Dhuhr': convert_to_24h(row['Zohor']),
+                        'Asr': convert_to_24h(row['Asar']),
+                        'Maghrib': convert_to_24h(row['Maghrib']),
+                        'Isha': convert_to_24h(row['Isyak'])
                     }
                     
                     logger.info(f"Retrieved MUIS prayer times from CSV for {date_str}")
