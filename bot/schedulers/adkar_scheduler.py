@@ -25,20 +25,24 @@ async def send_morning_adkar(bot: Bot, user_id: int):
         sunrise_time = timings.get('Sunrise', 'N/A') if timings else 'N/A'
         
         text = (
-            "🌅 *Morning Dhikr*\n\n"
+            "🌅 *Morning Dhikr & Daily Adhkar*\n\n"
+            "🤲 *Dua Upon Waking Up*\n\n"
             "الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُورُ\n"
-            "_All praise is for Allah who gave us life after causing us to die, and unto Him is the resurrection._\n\n"
-            "• Set your intention (Niyyah): seek closeness to Allah and purify your heart\n"
-            "• To Complete Wirdu Amm of the following below:\n"
-            "  - 100 Istighfar\n"
-            "  - 500 Salawat upon the Prophet ﷺ\n"
-            "  - 125 La Ilaha Illallah\n"
-            "• Upon reciting Wirdu Amm, Recite Surah Yaseen or Quran with tafsir: min. 1 page\n"
-            f"• Remember to pray Solat Ishraq prayers 15-20mins after Syuruk (Today's Syuruk is at: {sunrise_time})\n"
-            "• To recite Awrad Zuhooriyah: https://tinyurl.com/awradzuhooriyah\n"
-            "• Morning supplication for divine help:\n"
-            "  *Allahumma inni ala zikrika wa shukrika wa husni ibadatika*\n"
-            "  _(O Allah, help me to remember You, to be grateful to You, and to worship You in an excellent manner)_"
+            "_All praise is for Allah who gave us life after causing us to die, and unto Him is the resurrection._\n"
+            "_Al-hamdu lillahi alladhi ahyana ba'da ma amatana wa ilayhin-nushoor_\n\n"
+            "📋 *Daily Checklist:*\n"
+            "🤍 *Niyyah:* Seek closeness to Allah & purify the heart.\n"
+            "📿 *Wirdu Amm:*\n"
+            "  • 100x Istighfar\n"
+            "  • 500x Salawat upon the Prophet ﷺ\n"
+            "  • 125x La Ilaha Illallah\n"
+            "📖 *Quran:* Surah Yaseen OR min. 1 page Tafsir.\n"
+            f"🕌 *Ishraq:* Pray 15-20mins after Syuruk (Today: {sunrise_time})\n"
+            "🔗 *Awrad Zuhooriyah:* https://tinyurl.com/awradzuhooriyah\n\n"
+            "📿 *After Every Fard Prayer*\n"
+            "اللَّهُمَّ أَعِنِّي عَلَى ذِكْرِكَ، وَشُكْرِكَ، وَحُسْنِ عِبَادَتِكَ\n"
+            "_Allahumma a'inni 'ala dhikrika, wa shukrika, wa husni 'ibadatika_\n"
+            "_(O Allah, help me to remember You, to be grateful to You, and to worship You in an excellent manner)_"
         )
         
         await bot.send_message(user_id, text, parse_mode="Markdown")
@@ -51,14 +55,19 @@ async def send_evening_adkar(bot: Bot, user_id: int):
     """Send evening adkar reminder"""
     try:
         text = (
-            "🌇 *Evening Adkar Dhikr*\n\n"
-            "• Try to perform prayers in congregation\n"
-            "• Surah Al-Waqi'ah recitation\n"
-            "• Recite Hizbul Bahr\n"
-            "• Perform 1 set of Wird (Istighfar, Tahlil, Salawat, Muraqabah) 10–100x\n"
-            "• Evening charity reminder\n"
-            "• Reflection: pause and feel Allah's presence for 1–2 minutes\n"
-            "• Reminder to finish Wirdu Amm"
+            "🌇 *Evening Dhikr*\n\n"
+            "📿 *Adhkar:* Istighfar, Tahlil, Salawat, Muraqabah (10–100x)\n"
+            "🕯️ *Muhasabah:* Reflect on death (Mawt) & your deeds.\n"
+            "🤍 *Forgiveness:* Forgive anyone you hold grudges against.\n"
+            "🍃 *Mindfulness:* Feel gratitude & the presence of Allah.\n"
+            "🕌 *Worship:* Solat Sunnah Taubah + Surah As-Sajdah & Al-Mulk.\n"
+            "🤲 *Dua before sleeping:*\n"
+            "اللهم باسمك أموت وأحيا\n"
+            "_O Allah, with Your Name will I die and live (wake up)_\n"
+            "_Allahumma bismika amutu wa ahya_\n\n"
+            "Recite Last three verse of Surah Baqarah before sleeping.\n\n"
+            "🌙 *Niyyah:* Sleep with many good intentions of what you want to perform the next day.\n"
+            "🌬️ *Continuous Dhikr:* Make every breath a remembrance of Allah. Sleep with Allahu Allah."
         )
         
         await bot.send_message(user_id, text, parse_mode="Markdown")
@@ -72,14 +81,18 @@ async def send_sleep_adkar(bot: Bot, user_id: int):
     try:
         text = (
             "😴 *Before Sleep*\n\n"
-            "• Perform Istighfar, Tahlil, Salawat, Muraqabah: 10–100x\n"
-            "• Reflect on death (Mawt) and your deeds\n"
-            "• Forgive anyone you hold grudges against\n"
-            "• Mindfulness cue: feel gratitude and presence of Allah\n"
-            "• Perform Solat Sunnah Taubah and recite Surah As-Sajdah & Surah Mulk\n"
-            "• Dua: ask Allah for protection, forgiveness, and peaceful rest\n"
-            "• Sleep with good intentions to gain strength to worship and seek Allah's pleasure\n"
-            "• Continuous Dhikr — every breath can be remembrance of Allah"
+            "📿 *Adhkar:* Istighfar, Tahlil, Salawat, Muraqabah (10–100x)\n"
+            "🕯️ *Muhasabah:* Reflect on death (Mawt) & your deeds.\n"
+            "🤍 *Forgiveness:* Forgive anyone you hold grudges against.\n"
+            "🍃 *Mindfulness:* Feel gratitude & the presence of Allah.\n"
+            "🕌 *Worship:* Solat Sunnah Taubah + Surah As-Sajdah & Al-Mulk.\n"
+            "🤲 *Dua before sleeping:*\n"
+            "اللهم باسمك أموت وأحيا\n"
+            "_O Allah, with Your Name will I die and live (wake up)_\n"
+            "_Allahumma bismika amutu wa ahya_\n\n"
+            "Recite Last three verse of Surah Baqarah before sleeping.\n\n"
+            "🌙 *Niyyah:* Sleep with many good intentions of what you want to perform the next day.\n"
+            "🌬️ *Continuous Dhikr:* Make every breath a remembrance of Allah. Sleep with Allahu Allah."
         )
         
         await bot.send_message(user_id, text, parse_mode="Markdown")
@@ -92,14 +105,14 @@ async def send_allahu_allah(bot: Bot, user_id: int):
     """Send Allahu Allah dhikr reminder"""
     try:
         text = (
-            "💝 *Allahu Allah Reminder*\n\n"
+            "💝 *Allahu Allah (Dhikr Anfus) Reminder*\n\n"
             "Continuous Dhikr — every breath can be remembrance of Allah:\n"
-            "• Breathe *Allahu Allah* silently and connect your breath to Allah\n"
+            "• Breathe Allahu Allah silently and connect your breath to Allah\n"
+            "  To be in a state of gratitude for Allah for his providence of each breath\n"
+            "  And for one to recognise the neediness in each one is in every moment.\n\n"
+            "_From Allah, By Allah, With Allah, For Allah, Back to Allah._\n\n"
             "• Ask Allah for help in maintaining this Dhikr and staying mindful throughout the day\n"
-            "• Renew your intention (Niyyah) with every pause and breath\n"
-            "• Take a deep breath, feel gratitude for Allah's blessings\n"
-            "• Optional: Add a short personal dua from your heart\n"
-            "• Let this Dhikr inspire patience, sincerity, and mindfulness in all actions"
+            "• To also sleep with Allahu Allah"
         )
         
         await bot.send_message(user_id, text, parse_mode="Markdown")

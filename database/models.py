@@ -90,3 +90,32 @@ class StandingInstruction(Base):
     
     def __repr__(self):
         return f"<StandingInstruction(id={self.id}, user_id={self.user_id}, frequency={self.frequency})>"
+
+
+class BroadcastMessage(Base):
+    """Broadcast messages sent by admins"""
+    __tablename__ = 'broadcast_messages'
+    
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    admin_id = Column(BigInteger, nullable=False)
+    message_text = Column(String(4096), nullable=True)
+    telegram_message_id = Column(BigInteger, nullable=True)
+    is_deleted = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    def __repr__(self):
+        return f"<BroadcastMessage(id={self.id}, admin_id={self.admin_id})>"
+
+
+class BroadcastMessageRecipient(Base):
+    """Track which users received which broadcast messages"""
+    __tablename__ = 'broadcast_message_recipients'
+    
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    broadcast_id = Column(BigInteger, ForeignKey('broadcast_messages.id', ondelete='CASCADE'), nullable=False)
+    user_id = Column(BigInteger, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    sent_message_id = Column(BigInteger, nullable=True)  # Telegram message ID in user's chat
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    def __repr__(self):
+        return f"<BroadcastMessageRecipient(broadcast_id={self.broadcast_id}, user_id={self.user_id})>"

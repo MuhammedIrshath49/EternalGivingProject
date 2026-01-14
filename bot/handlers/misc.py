@@ -19,21 +19,53 @@ from config import (
 )
 from bot.utils.resources_api import get_resource_categories, get_resources_by_category
 from database.models import StandingInstruction, DonationType, DonationFrequency
+from bot.security import verify_critical_operation_allowed, log_critical_operation
 
 logger = logging.getLogger(__name__)
 router = Router()
 
 
-@router.message(Command("tasbih"))
-async def cmd_tasbih(message: Message):
-    """Handle /tasbih command"""
+@router.message(Command("wirdamm", "tasbih"))
+async def cmd_wirdamm(message: Message):
+    """Handle /wirdamm command (also supports legacy /tasbih)"""
     text = (
-        "                    📿 *Tasbih Time*\n\n"
-        "• *أَسْتَغْفِرُ ٱللَّٰهَ* (100×)\n"
-        "• *ٱللَّٰهُ ٱللَّٰهُ*\n"
-        "• *ٱللَّهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ ﷺ*\n\n"
-        "﴿ أَلَا بِذِكْرِ ٱللَّٰهِ تَطْمَئِنُّ ٱلْقُلُوبُ ﴾\n"
-        "_Verily, in the remembrance of Allah do hearts find rest._ (13:28)"
+        "📿 *Wirdu Amm*\n\n"
+        "• 100x Istighfar\n"
+        "  أَسْتَغْفِرُ ٱللَّهَ\n"
+        "  _(I seek forgiveness from Allah)_\n\n"
+        "• 500x Salawat upon the Prophet ﷺ\n"
+        "  صَلَّى اللّٰهُ عَلَىٰ مُحَمَّد\n"
+        "  _(May Allah send blessings upon Muhammad)_\n\n"
+        "• 125x La Ilaha Illallah\n"
+        "  لَا إِلَٰهَ إِلَّا ٱللَّهُ\n"
+        "  _(There is no deity but Allah)_\n\n"
+        "• Throughout the day: Allahu Allah\n"
+        "  ٱللَّهُ ٱللَّهُ\n\n"
+        "﴾ أَلَا بِذِكْرِ ٱللَّهِ تَطْمَئِنُّ ٱلْقُلُوبُ ﴿\n"
+        "_\"Verily, in the remembrance of Allah do hearts find rest.\" (13:28)_"
+    )
+    
+    await message.answer(text, parse_mode="Markdown")
+
+
+@router.message(Command("wirdamm"))
+async def cmd_wirdamm(message: Message):
+    """Handle /wirdamm command - Wirdu Amm dhikr"""
+    text = (
+        "📿 *Wirdu Amm*\n\n"
+        "• 100x Istighfar\n"
+        "  أَسْتَغْفِرُ ٱللَّهَ\n"
+        "  _(I seek forgiveness from Allah)_\n\n"
+        "• 500x Salawat upon the Prophet ﷺ\n"
+        "  صَلَّى اللّٰهُ عَلَىٰ مُحَمَّد\n"
+        "  _(May Allah send blessings upon Muhammad)_\n\n"
+        "• 125x La Ilaha Illallah\n"
+        "  لَا إِلَٰهَ إِلَّا ٱللَّهُ\n"
+        "  _(There is no deity but Allah)_\n\n"
+        "• Throughout the day: Allahu Allah\n"
+        "  ٱللَّهُ ٱللَّهُ\n\n"
+        "﴾ أَلَا بِذِكْرِ ٱللَّهِ تَطْمَئِنُّ ٱلْقُلُوبُ ﴿\n"
+        "_\"Verily, in the remembrance of Allah do hearts find rest.\" (13:28)_"
     )
     
     await message.answer(text, parse_mode="Markdown")
@@ -42,29 +74,48 @@ async def cmd_tasbih(message: Message):
 @router.message(Command("amaljariah"))
 async def cmd_amaljariah(message: Message):
     """Handle /amaljariah command"""
-    keyboard_buttons = [
-        [InlineKeyboardButton(text="🌹 AMAL JARIAH PROJECTS", callback_data="amal_jariah")],
-        [InlineKeyboardButton(text="🎁 HADIAH", callback_data="amal_hadiah")],
-        [InlineKeyboardButton(text="📚 CLASS FEES", callback_data="amal_class")],
-        [InlineKeyboardButton(text="📢 DAWAH PROJECTS", callback_data="amal_dawah")],
-        [InlineKeyboardButton(text="👶 SPONSOR A ORPHAN", callback_data="amal_orphan")]
-    ]
-    
-    # Add standing instruction option if enabled
-    if STANDING_INSTRUCTION_ENABLED:
-        keyboard_buttons.append(
-            [InlineKeyboardButton(text="🔄 SETUP STANDING INSTRUCTION", callback_data="setup_standing_instruction")]
+    # Security check
+    if not verify_critical_operation_allowed("amaljariah"):
+        await message.answer(
+            "🔒 *Security Alert*\n\n"
+            "This feature is temporarily unavailable due to security measures.\n"
+            "Please contact the administrators for more information.",
+            parse_mode="Markdown"
         )
+        return
     
-    keyboard = InlineKeyboardMarkup(inline_keyboard=keyboard_buttons)
+    log_critical_operation("amaljariah_view", message.from_user.id, "User viewed donation page")
+    
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🔄 Support New Muslims and Seekers Institute", callback_data="setup_standing_instruction")]
+    ])
     
     text = (
-        "                           ۞﷽۞\n\n"
+        "بسم الله الرحمن الرحيم\n\n"
         f"Thank you for your interest in contributing to the *{INSTITUTE_NAME}*!\n\n"
-        "To make your donation, Please select which project you are interested in contributing to:"
+        "Set up a recurring monthly donation to support the Rose of Madinah Institute continuously!"
     )
     
     await message.answer(text, reply_markup=keyboard, parse_mode="Markdown")
+
+
+@router.message(Command("supportnmsi"))
+async def cmd_supportnmsi(message: Message):
+    """Handle /supportnmsi command - Support New Muslims and Seekers Institute"""
+    text = (
+        "🕌 *Support New Muslims and Seekers Institute*\n\n"
+        "By the grace of Allah ﷻ, we have secured a new space at Shun Li Industrial Park. "
+        "We pray it becomes a home of remembrance, learning, and returning to Allah.\n\n"
+        "We invite you to be part of this ongoing amal jariyah, supporting a space dedicated to "
+        "New Muslims and Seekers. Our goal is SGD 10,000 monthly, with 100 members contributing "
+        "SGD 100 per month, inshaAllah.\n\n"
+        "If you feel called to support this effort, please register here and standing instruction "
+        "details in link below:\n\n"
+        "📌 https://tinyurl.com/nmsimembership\n\n"
+        "May Allah ﷻ accept from all of us."
+    )
+    
+    await message.answer(text, parse_mode="Markdown", disable_web_page_preview=True)
 
 
 @router.callback_query(F.data.in_(["amal_jariah", "amal_hadiah", "amal_class", "amal_dawah", "amal_orphan"]))
@@ -121,6 +172,19 @@ async def callback_amal_jariah(callback: CallbackQuery):
 @router.callback_query(F.data == "setup_standing_instruction")
 async def callback_setup_standing_instruction(callback: CallbackQuery):
     """Handle standing instruction setup"""
+    # Security check
+    if not verify_critical_operation_allowed("standing_instruction_setup"):
+        await callback.message.answer(
+            "🔒 *Security Alert*\n\n"
+            "This feature is temporarily unavailable due to security measures.\n"
+            "Please contact the administrators for more information.",
+            parse_mode="Markdown"
+        )
+        await callback.answer()
+        return
+    
+    log_critical_operation("standing_instruction_view", callback.from_user.id, "User viewed standing instruction setup")
+    
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🌹 Amal Jariah Project", callback_data="si_amal_jariah")],
         [InlineKeyboardButton(text="🎁 Hadiah to Teacher", callback_data="si_amal_hadiah")],
@@ -140,7 +204,11 @@ async def callback_setup_standing_instruction(callback: CallbackQuery):
         "Please select which project you'd like to support regularly:"
     )
     
-    await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="Markdown")
+    try:
+        await callback.message.edit_text(text, reply_markup=keyboard, parse_mode="Markdown")
+    except Exception:
+        # If message is the same, just answer the callback
+        pass
     await callback.answer()
 
 
@@ -326,13 +394,10 @@ async def cmd_resources(message: Message):
     # Create buttons for each category
     keyboard_buttons = []
     category_icons = {
-        "Duas": "🤲",
-        "Surahs": "📖",
-        "Iqra": "📚",
-        "Latest Articles": "📰",
+        "DUA": "🤲",
         "Awrad": "🌙",
-        "Handbooks": "📕",
-        "Virtues of Islamic Months": "✨",
+        "Books": "📚",
+        "Virtues": "✨",
         "Friday Khutbah": "🕌"
     }
     
@@ -442,19 +507,13 @@ async def callback_resource_category(callback: CallbackQuery):
 @router.callback_query(F.data == "resource_back")
 async def callback_resource_back(callback: CallbackQuery):
     """Handle back to categories button"""
-    categories = await get_resource_categories()
-    
-    # Create buttons for each category
+    # Create buttons for each category (same as /resources command)
     keyboard_buttons = []
     category_icons = {
-        "Duas": "🤲",
-        "Surahs": "📖",
-        "Iqra": "📚",
-        "Latest Articles": "📰",
+        "DUA": "🤲",
         "Awrad": "🌙",
-        "Handbooks": "📕",
-        "Virtues of Islamic Months": "✨",
-        "Friday Khutbah": "🕌"
+        "Books": "📚",
+        "Virtues": "✨"
     }
     
     # Add Friday Khutbah as first category
@@ -465,6 +524,8 @@ async def callback_resource_back(callback: CallbackQuery):
         )
     ])
     
+    # Add resource categories from RESOURCES_DATA
+    categories = await get_resource_categories()
     for category in categories:
         icon = category_icons.get(category, "📄")
         keyboard_buttons.append([
@@ -496,6 +557,32 @@ async def cmd_feedback(message: Message):
     )
     
     await message.answer(text, parse_mode="Markdown", disable_web_page_preview=True)
+
+
+@router.message(Command("clear"))
+async def cmd_clear(message: Message):
+    """Handle /clear command - Clear all previous messages for better user experience"""
+    try:
+        # Delete the command message itself
+        await message.delete()
+        
+        # Send a confirmation message
+        confirmation = await message.answer(
+            "🧹 *Messages Cleared*\n\nYour chat history has been cleared for a fresh start.",
+            parse_mode="Markdown"
+        )
+        
+        # Auto-delete the confirmation after 3 seconds
+        import asyncio
+        await asyncio.sleep(3)
+        await confirmation.delete()
+        
+    except Exception as e:
+        logger.error(f"Error clearing messages for user {message.from_user.id}: {e}")
+        await message.answer(
+            "Note: Due to Telegram limitations, only messages sent by the bot in the last 48 hours can be deleted.",
+            parse_mode="Markdown"
+        )
 
 
 @router.message(F.text)

@@ -14,10 +14,11 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from config import API_TOKEN, LOG_LEVEL
 from database import init_db, close_db
-from bot.handlers import start, prayer, adkar, misc
+from bot.handlers import start, prayer, adkar, misc, admin
 from bot.schedulers.prayer_scheduler import setup_prayer_scheduler, schedule_all_prayer_reminders
 from bot.schedulers.adkar_scheduler import setup_adkar_scheduler, schedule_all_adkar
 from bot.schedulers.khutbah_scheduler import setup_khutbah_scheduler
+from bot.security import initialize_file_hashes, periodic_security_check, check_kill_switch
 
 # Configure logging
 logging.basicConfig(
@@ -31,6 +32,15 @@ logger = logging.getLogger(__name__)
 async def on_startup(bot: Bot, scheduler: AsyncIOScheduler):
     """Actions to perform on bot startup"""
     logger.info("Initializing ROM PeerBot...")
+    
+    # Initialize security monitoring
+    logger.info("Initializing security system...")
+    initialize_file_hashes()
+    
+    # Check for active kill switch
+    if check_kill_switch():
+        logger.critical("⚠️ KILL SWITCH IS ACTIVE - Critical functions are disabled!")
+        logger.critical("Remove .killswitch file and restart to restore full functionality")
     
     # Initialize database
     await init_db()
@@ -49,10 +59,12 @@ async def on_startup(bot: Bot, scheduler: AsyncIOScheduler):
         BotCommand(command="eveningadkar", description="Configure evening adkar"),
         BotCommand(command="adkarbeforesleep", description="Configure sleep adkar"),
         BotCommand(command="allahuallah", description="Configure Allahu Allah reminders"),
-        BotCommand(command="tasbih", description="Get tasbih reminder"),
+        BotCommand(command="wirdamm", description="Wirdu Amm dhikr reminder"),
         BotCommand(command="amaljariah", description="Support the project"),
+        BotCommand(command="supportnmsi", description="Support NMSI"),
         BotCommand(command="mydonations", description="Manage recurring donations"),
         BotCommand(command="resources", description="Access Islamic resources"),
+        BotCommand(command="clear", description="Clear previous messages"),
         BotCommand(command="feedback", description="Send feedback"),
     ]
     await bot.set_my_commands(commands)
@@ -62,6 +74,17 @@ async def on_startup(bot: Bot, scheduler: AsyncIOScheduler):
     setup_prayer_scheduler(scheduler, bot)
     setup_adkar_scheduler(scheduler, bot)
     setup_khutbah_scheduler(scheduler, bot)
+    
+    # Setup security monitoring (check every hour)
+    from apscheduler.triggers.interval import IntervalTrigger
+    import pytz
+    scheduler.add_job(
+        periodic_security_check,
+        trigger=IntervalTrigger(hours=1, timezone=pytz.timezone("Asia/Singapore")),
+        id="security_check",
+        name="Periodic Security Check"
+    )
+    logger.info("Security monitoring scheduler configured")
     
     # Schedule initial reminders
     await schedule_all_prayer_reminders(scheduler, bot)
@@ -100,6 +123,7 @@ async def main():
     dp.include_router(prayer.router)
     dp.include_router(adkar.router)
     dp.include_router(misc.router)
+    dp.include_router(admin.router)
     
     # Middleware to inject session into handlers
     from sqlalchemy.ext.asyncio import AsyncSession
