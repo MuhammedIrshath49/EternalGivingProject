@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 # In production, this would fetch from Google Sheets API
 # Resource structure matches Google Sheets: Resource Type | TITLE | Resource Link | File Type
 RESOURCES_DATA = {
-    "DUA": [
+    "Duas": [
         {"title": "Dua for Parents", "url": "https://www.youtube.com/shorts/7ucoiiJwzuk", "type": "Video"},
         {"title": "Dua when Travelling", "url": "https://youtube.com/shorts/aJkPte7I3Zg?si=eEijFurbHWnmZAvW", "type": "Video"}
     ],

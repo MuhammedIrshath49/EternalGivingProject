@@ -212,7 +212,7 @@ async def callback_setup_standing_instruction(callback: CallbackQuery):
     await callback.answer()
 
 
-@router.callback_query(F.data.startswith("si_"))
+@router.callback_query(F.data.startswith("si_") & ~F.data.startswith("si_freq_") & ~F.data.startswith("si_custom_"))
 async def callback_standing_instruction_project(callback: CallbackQuery):
     """Handle standing instruction project selection"""
     project_key = callback.data.replace("si_", "")
@@ -253,10 +253,27 @@ async def callback_confirm_standing_instruction(callback: CallbackQuery, session
     from datetime import datetime, timedelta
     
     # Parse callback data: si_freq_{project}_{frequency}_{amount}
-    parts = callback.data.replace("si_freq_", "").split("_")
-    project_key = parts[0]
-    frequency = parts[1]
-    amount = parts[2]
+    # Need to handle project keys with underscores (e.g., amal_class)
+    data_without_prefix = callback.data.replace("si_freq_", "")
+    
+    # Known project keys
+    project_keys = ["amal_jariah", "amal_hadiah", "amal_class", "amal_dawah", "amal_orphan"]
+    
+    # Find which project key matches
+    project_key = None
+    for pk in project_keys:
+        if data_without_prefix.startswith(pk + "_"):
+            project_key = pk
+            remaining = data_without_prefix[len(pk) + 1:]  # Get everything after project_key_
+            parts = remaining.split("_")
+            frequency = parts[0]
+            amount = parts[1]
+            break
+    
+    if not project_key:
+        logger.error(f"Could not parse callback data: {callback.data}")
+        await callback.answer("Error processing request", show_alert=True)
+        return
     
     project_names = {
         "amal_jariah": "Amal Jariah Project",
@@ -394,7 +411,7 @@ async def cmd_resources(message: Message):
     # Create buttons for each category
     keyboard_buttons = []
     category_icons = {
-        "DUA": "🤲",
+        "Duas": "🤲",
         "Awrad": "🌙",
         "Books": "📚",
         "Virtues": "✨",

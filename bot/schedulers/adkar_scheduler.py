@@ -57,17 +57,18 @@ async def send_evening_adkar(bot: Bot, user_id: int):
         text = (
             "🌇 *Evening Dhikr*\n\n"
             "📿 *Adhkar:* Istighfar, Tahlil, Salawat, Muraqabah (10–100x)\n"
-            "🕯️ *Muhasabah:* Reflect on death (Mawt) & your deeds.\n"
+            "🕯️ *Muhasabah:* Reflect on your day and your deeds.\n"
             "🤍 *Forgiveness:* Forgive anyone you hold grudges against.\n"
             "🍃 *Mindfulness:* Feel gratitude & the presence of Allah.\n"
-            "🕌 *Worship:* Solat Sunnah Taubah + Surah As-Sajdah & Al-Mulk.\n"
-            "🤲 *Dua before sleeping:*\n"
-            "اللهم باسمك أموت وأحيا\n"
-            "_O Allah, with Your Name will I die and live (wake up)_\n"
-            "_Allahumma bismika amutu wa ahya_\n\n"
-            "Recite Last three verse of Surah Baqarah before sleeping.\n\n"
-            "🌙 *Niyyah:* Sleep with many good intentions of what you want to perform the next day.\n"
-            "🌬️ *Continuous Dhikr:* Make every breath a remembrance of Allah. Sleep with Allahu Allah."
+            "🕌 *Worship:* Engage in dhikr and remembrance\n\n"
+            "📖 *Evening Adhkar:*\n"
+            "أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ\n"
+            "_We have entered the evening and with it all the dominion is Allah's_\n"
+            "_Amsayna wa amsal-mulku lillah_\n\n"
+            "الْحَمْدُ لِلَّهِ الَّذِي عَافَانِي فِي جَسَدِي\n"
+            "_All praise is for Allah who has restored to me my health_\n"
+            "_Alhamdu lillahil-lazi 'afani fi jasadi_\n\n"
+            "🌬️ *Continuous Dhikr:* Make every breath a remembrance of Allah with Allahu Allah."
         )
         
         await bot.send_message(user_id, text, parse_mode="Markdown")
