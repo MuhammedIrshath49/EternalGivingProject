@@ -105,6 +105,25 @@ async def get_latest_khutbah_pdf_url() -> tuple[bytes | None, str]:
                         # Skip general directory links
                         if href.endswith('/khutbah/') or href.endswith('/khutbah') or href == '/resources/khutbah-and-religious-advice/':
                             continue
+                        
+                        # Check if the link is associated with English language
+                        # Look at the link's parent elements for language indicators
+                        parent_text = link.parent.get_text() if link.parent else ""
+                        if 'Tamil' in parent_text or 'Malay' in parent_text:
+                            logger.debug(f"Skipping non-English khutbah: {href}")
+                            continue
+                        
+                        # Check if there's a language badge/label near the link
+                        article_container = link.find_parent(['article', 'div', 'li'])
+                        if article_container:
+                            container_text = article_container.get_text()
+                            if 'Tamil' in container_text and 'English' not in container_text:
+                                logger.debug(f"Skipping Tamil khutbah based on container: {href}")
+                                continue
+                            if 'Malay' in container_text and 'English' not in container_text:
+                                logger.debug(f"Skipping Malay khutbah based on container: {href}")
+                                continue
+                        
                         logger.debug(f"Found potential khutbah link: {href}")
                         khutbah_link = href
                         break
@@ -130,6 +149,12 @@ async def get_latest_khutbah_pdf_url() -> tuple[bytes | None, str]:
             
             # Step 4: Find the PDF download link
             detail_soup = BeautifulSoup(detail_html, 'html.parser')
+            
+            # Verify this is an English khutbah
+            page_text = detail_soup.get_text()
+            if 'Tamil' in page_text and 'English' not in page_text[:1000]:
+                logger.warning("Retrieved Tamil khutbah instead of English, skipping")
+                return None, ""
             
             # Look for PDF download link
             pdf_link = None
